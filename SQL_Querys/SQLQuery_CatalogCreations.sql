@@ -32,6 +32,11 @@ CREATE TABLE dbo.TipoAsociacion(
 	Nombre VARCHAR(128)
 );
 GO
+CREATE TABLE dbo.TipoMedioPago(
+	idTipoPago INT PRIMARY KEY,
+	Nombre VARCHAR(128)
+);
+GO
 CREATE TABLE dbo.PeriodoMontoCC(
 	idPeriodoMonto INT PRIMARY KEY,
 	Nombre VARCHAR(128),
