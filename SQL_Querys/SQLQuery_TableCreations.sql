@@ -11,12 +11,12 @@ CREATE TABLE dbo.Persona(
 GO
 
 CREATE TABLE dbo.PropiedadPersona(
-	idPropiedad INT NOT NULL,
+	idPropiedadP INT IDENTITY(1,1) PRIMARY KEY,
 	valorDocId NVARCHAR(20) NOT NULL,
 	tipoAsoId INT NOT NULL,
-	FechaInicio DATE,
-	PRIMARY KEY (idPropiedad,valorDocId,FechaInicio),
-	FOREIGN KEY(idPropiedad) REFERENCES dbo.Propiedad(idPropiedad),
+	numeroFinca NVARCHAR(128),
+	FechaInicio DATE, 
+	FOREIGN KEY(numeroFinca) REFERENCES dbo.Propiedad(numeroDeFinca),
 	FOREIGN KEY (valorDocId) REFERENCES dbo.Persona(valorDocId),
 	FOREIGN KEY (tipoAsoId) REFERENCES dbo.TipoAsociacion(idTipoAso)
 );
@@ -35,7 +35,7 @@ GO
 
 CREATE TABLE dbo.Propiedad(
 	idPropiedad INT IDENTITY(1,1) PRIMARY KEY,
-	numeroDeFinca NVARCHAR(128),
+	numeroDeFinca NVARCHAR(128) UNIQUE NOT NULL,
 	numeroMedidor NVARCHAR(128),
 	areaM2 INT,
 	tipoUso INT,
@@ -48,3 +48,30 @@ CREATE TABLE dbo.Propiedad(
 	FOREIGN KEY (tipoZona) REFERENCES dbo.TipoZonaPropiedad(idTipoZona)
 );
 GO
+CREATE TABLE dbo.CCPropiedad(
+	idCCPropiedad INT IDENTITY(1,1) PRIMARY KEY,
+	numeroDeFinca NVARCHAR(128),
+	idCC INT,
+	tipoAso INT,
+	fechaRegistro DATE NOT NULL,
+	FOREIGN KEY (idCC) REFERENCES dbo.CCs(id),
+	FOREIGN KEY (tipoAso) REFERENCES dbo.TipoAsociacion(idTipoAso)
+);
+GO
+CREATE TABLE dbo.LecturaMedidor(
+	idLecturaMedidor INT IDENTITY(1,1) PRIMARY KEY,
+	numeroMedidor NVARCHAR(128),
+	tipoMov INT,
+	valor DECIMAL(10,2),
+	fechaLectura DATE NOT NULL,
+	FOREIGN KEY (tipoMov) REFERENCES dbo.TipoMovimientoLecturaMedidor(idTipoMov)
+);
+GO
+CREATE TABLE dbo.Pagos(
+	idPago INT IDENTITY(1,1) PRIMARY KEY,
+	numeroFinca NVARCHAR(128),
+	tipoMedioPago INT,
+	numeroRef NVARCHAR(128),
+	fechaPago DATE NOT NULL,
+	FOREIGN KEY (tipoMedioPago) REFERENCES dbo.TipoMedioPago(idTipoPago)
+);
