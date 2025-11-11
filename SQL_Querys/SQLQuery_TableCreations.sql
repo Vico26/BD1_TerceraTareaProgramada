@@ -6,16 +6,17 @@ CREATE TABLE dbo.Persona(
 	valorDocId NVARCHAR(20) NOT NULL PRIMARY KEY,
 	Nombre NVARCHAR(128) NOT NULL,
 	email NVARCHAR(128),
-	telefono VARCHAR(128)
+	telefono VARCHAR(128),
+	fechaRegistro DATE
 );
 GO
 
 CREATE TABLE dbo.PropiedadPersona(
 	idPropiedadP INT IDENTITY(1,1) PRIMARY KEY,
 	valorDocId NVARCHAR(20) NOT NULL,
-	tipoAsoId INT NOT NULL,
 	numeroFinca NVARCHAR(128),
-	FechaInicio DATE, 
+	tipoAsoId INT NOT NULL,
+	fechaRegistro DATE,
 	FOREIGN KEY(numeroFinca) REFERENCES dbo.Propiedad(numeroDeFinca),
 	FOREIGN KEY (valorDocId) REFERENCES dbo.Persona(valorDocId),
 	FOREIGN KEY (tipoAsoId) REFERENCES dbo.TipoAsociacion(idTipoAso)
@@ -74,4 +75,15 @@ CREATE TABLE dbo.Pagos(
 	numeroRef NVARCHAR(128),
 	fechaPago DATE NOT NULL,
 	FOREIGN KEY (tipoMedioPago) REFERENCES dbo.TipoMedioPago(idTipoPago)
+);
+GO
+CREATE TABLE dbo.Factura (
+    idFactura INT IDENTITY(1,1) PRIMARY KEY,   -- Clave interna automática
+	numeroFactura NVARCHAR(128) NOT NULL,       -- Número visible (FAC-YYYY-XXXX)
+    numeroFinca NVARCHAR(128) NOT NULL,         
+    fechaFactura DATE NOT NULL,                 
+    consumoM3 DECIMAL(10,2) NOT NULL,           
+    monto MONEY NOT NULL,                       
+    fechaVencimiento DATE NULL,                 -- Fecha límite de pago
+    pagado BIT DEFAULT 0                        
 );
