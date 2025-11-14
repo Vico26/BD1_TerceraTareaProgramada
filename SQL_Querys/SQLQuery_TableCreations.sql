@@ -95,5 +95,33 @@ CREATE TABLE dbo.Pagos(
 	FOREIGN KEY (tipoMedioPago) REFERENCES dbo.TipoMedioPago(idTipoPago)
 );
 GO
+CREATE TABLE dbo.DetalleFactura(
+    idDetalle INT IDENTITY(1,1) PRIMARY KEY,
+    idFactura INT NOT NULL,
+    idCC INT NULL,                -- referencia al CC aplicado (si aplica)
+    descripcion NVARCHAR(200) NULL,
+    monto MONEY NOT NULL,
+    fechaRegistro DATE NOT NULL DEFAULT CAST(GETDATE() AS DATE),
+    FOREIGN KEY (idFactura) REFERENCES dbo.Factura(idFactura),
+    FOREIGN KEY (idCC) REFERENCES dbo.CCs(id)
+);
+GO
+CREATE TABLE dbo.OrdenCorte(
+    idOrdenCorte INT IDENTITY(1,1) PRIMARY KEY,
+    idFactura INT NOT NULL,
+    numeroFinca NVARCHAR(128) NOT NULL,
+    fechaOrden DATE NOT NULL,
+    estado INT NOT NULL DEFAULT 1, -- 1: pendiente reconexión, 2: reconexión pagado
+    fechaEstado DATE NULL,
+    FOREIGN KEY (idFactura) REFERENCES dbo.Factura(idFactura)
+);
+GO
+CREATE TABLE dbo.OrdenReconexion(
+    idReconexion INT IDENTITY(1,1) PRIMARY KEY,
+    idOrdenCorte INT NOT NULL,
+    numeroFinca NVARCHAR(128) NOT NULL,
+    fechaReconexion DATE NOT NULL,
+    FOREIGN KEY (idOrdenCorte) REFERENCES dbo.OrdenCorte(idOrdenCorte)
+);
 
 
