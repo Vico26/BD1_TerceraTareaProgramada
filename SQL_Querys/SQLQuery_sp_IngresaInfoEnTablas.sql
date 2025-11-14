@@ -30,7 +30,7 @@ BEGIN
 		);
 
 		-- Propiedad
-		INSERT INTO dbo.Propiedad(numeroDeFinca, numeroMedidor, areaM2, tipoUso, tipoZona, valorFiscal, FechaRegistro)
+		INSERT INTO dbo.Propiedad(numeroFinca, numeroMedidor, areaM2, tipoUso, tipoZona, valorFiscal, FechaRegistro)
 		SELECT
 			P.value('@numeroFinca','NVARCHAR(128)'),
 			P.value('@numeroMedidor','NVARCHAR(128)'),
@@ -43,7 +43,7 @@ BEGIN
 		WHERE NOT EXISTS (
 			SELECT 1
 			FROM dbo.Propiedad p
-			WHERE p.numeroDeFinca = P.value('@numeroFinca','NVARCHAR(128)')
+			WHERE p.numeroFinca = P.value('@numeroFinca','NVARCHAR(128)')
 		);
 
 		-- PropiedadPersona
@@ -62,7 +62,7 @@ BEGIN
 		);
 
 		-- CCPropiedad
-		INSERT INTO dbo.CCPropiedad(numeroDeFinca, idCC, tipoAso, fechaRegistro)
+		INSERT INTO dbo.CCPropiedad(numeroFinca, idCC, tipoAso, fechaRegistro)
 		SELECT
 			c.value('@numeroFinca','NVARCHAR(128)'),
 			TRY_CAST(c.value('@idCC','VARCHAR(20)') AS INT),
@@ -73,7 +73,7 @@ BEGIN
 		WHERE NOT EXISTS (
 			SELECT 1
 			FROM dbo.CCPropiedad C
-			WHERE C.numeroDeFinca = c.value('@numeroFinca','NVARCHAR(128)')
+			WHERE C.numeroFinca = c.value('@numeroFinca','NVARCHAR(128)')
 		);
 
 		-- LecturaMedidor
