@@ -50,16 +50,17 @@ CREATE TABLE dbo.TipoMontoC(
 GO
 CREATE TABLE dbo.CCs(
 	id INT PRIMARY KEY,
-	Nombre VARCHAR(128),
-	tipoMonto INT,
-	periodoMonto INT,
-	valorMin INT,
-	valorMinM3 INT,
-	valorFijoM3Adicional INT,
-	valorPorcentual DECIMAL(10,2),
-	valorFijo INT,
-	valorMinM2 INT,
-	valorTramoM2 INT
+	nombre NVARCHAR(128),
+	tipoMonto INT NOT NULL,         --Relación con TipoMontoCC
+	periodoMonto INT NOT NULL,      --Relación con PeriodoMontoCC
+	valorMin INT NULL,
+	valorMinM3 INT NULL,
+	valorFijoM3Adicional INT NULL,
+	valorPorcentual DECIMAL(10,4) NULL,
+	valorFijo INT NULL,
+	valorMinM2 INT NULL,
+	valorTramoM2 INT NULL,
+	FOREIGN KEY (tipoMonto) REFERENCES dbo.TipoMontoC(idTipoMonto),
+	FOREIGN KEY (periodoMonto) REFERENCES dbo.PeriodoMontoCC(idPeriodoMonto)
 );
-GO
 --CATALOGS CREATION END

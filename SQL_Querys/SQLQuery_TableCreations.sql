@@ -17,7 +17,8 @@ CREATE TABLE dbo.PropiedadPersona(
 	numeroFinca NVARCHAR(128),
 	tipoAsoId INT NOT NULL,
 	fechaRegistro DATE,
-	FOREIGN KEY(numeroFinca) REFERENCES dbo.Propiedad(numeroDeFinca),
+	fechaFin DATE NULL,
+	FOREIGN KEY(numeroFinca) REFERENCES dbo.Propiedad(numeroFinca),
 	FOREIGN KEY (valorDocId) REFERENCES dbo.Persona(valorDocId),
 	FOREIGN KEY (tipoAsoId) REFERENCES dbo.TipoAsociacion(idTipoAso)
 );
@@ -36,13 +37,13 @@ GO
 
 CREATE TABLE dbo.Propiedad(
 	idPropiedad INT IDENTITY(1,1) PRIMARY KEY,
-	numeroDeFinca NVARCHAR(128) UNIQUE NOT NULL,
+	numeroFinca NVARCHAR(128) UNIQUE NOT NULL,
 	numeroMedidor NVARCHAR(128),
 	areaM2 INT,
-	tipoUso INT,
-	tipoZona INT,
-	valorFiscal MONEY,
-	FechaRegistro DATE,
+	tipoUso INT NOT NULL,
+	tipoZona INT NOT NULL,
+	valorFiscal MONEY NOT NULL,
+	FechaRegistro DATE NOT NULL,
 	saldoM3 DECIMAL(10,2) DEFAULT 0,
 	saldoM3ultimaFactura DECIMAL(10,2) DEFAULT 0,
 	FOREIGN KEY (tipoUso) REFERENCES dbo.TipoUsoPropiedad(idTipoUso),
@@ -51,9 +52,9 @@ CREATE TABLE dbo.Propiedad(
 GO
 CREATE TABLE dbo.CCPropiedad(
 	idCCPropiedad INT IDENTITY(1,1) PRIMARY KEY,
-	numeroDeFinca NVARCHAR(128),
-	idCC INT,
-	tipoAso INT,
+	numeroFinca NVARCHAR(128),
+	idCC INT NOT NULL,
+	tipoAso INT NOT NULL,
 	fechaRegistro DATE NOT NULL,
 	FOREIGN KEY (idCC) REFERENCES dbo.CCs(id),
 	FOREIGN KEY (tipoAso) REFERENCES dbo.TipoAsociacion(idTipoAso)
@@ -62,28 +63,37 @@ GO
 CREATE TABLE dbo.LecturaMedidor(
 	idLecturaMedidor INT IDENTITY(1,1) PRIMARY KEY,
 	numeroMedidor NVARCHAR(128),
-	tipoMov INT,
+	tipoMov INT NOT NULL,
 	valor DECIMAL(10,2),
 	fechaLectura DATE NOT NULL,
 	FOREIGN KEY (tipoMov) REFERENCES dbo.TipoMovimientoLecturaMedidor(idTipoMov)
 );
 GO
-CREATE TABLE dbo.Pagos(
-	idPago INT IDENTITY(1,1) PRIMARY KEY,
-	numeroFinca NVARCHAR(128),
-	tipoMedioPago INT,
-	numeroRef NVARCHAR(128),
-	fechaPago DATE NOT NULL,
-	FOREIGN KEY (tipoMedioPago) REFERENCES dbo.TipoMedioPago(idTipoPago)
-);
-GO
+
 CREATE TABLE dbo.Factura (
     idFactura INT IDENTITY(1,1) PRIMARY KEY,   -- Clave interna automática
 	numeroFactura NVARCHAR(128) NOT NULL,       -- Número visible (FAC-YYYY-XXXX)
     numeroFinca NVARCHAR(128) NOT NULL,         
-    fechaFactura DATE NOT NULL,                 
+    fechaFactura DATE NOT NULL,
+	fechaVencimiento DATE NULL, -- Fecha límite de pago
     consumoM3 DECIMAL(10,2) NOT NULL,           
-    monto MONEY NOT NULL,                       
-    fechaVencimiento DATE NULL,                 -- Fecha límite de pago
-    pagado BIT DEFAULT 0                        
+    monto MONEY NOT NULL,
+	totalFinal MONEY NULL,
+    pagado BIT DEFAULT 0,
+	FOREIGN KEY(numeroFinca) REFERENCES dbo.Propiedad(numeroFinca)
 );
+GO
+
+CREATE TABLE dbo.Pagos(
+	idPago INT IDENTITY(1,1) PRIMARY KEY,
+	numeroFinca NVARCHAR(128),
+	tipoMedioPago INT,
+	idFactura INT NULL,
+	numeroRef NVARCHAR(128),
+	fechaPago DATE NOT NULL,
+	FOREIGN KEY (idFactura) REFERENCES dbo.Factura(idFactura),
+	FOREIGN KEY (tipoMedioPago) REFERENCES dbo.TipoMedioPago(idTipoPago)
+);
+GO
+
+
