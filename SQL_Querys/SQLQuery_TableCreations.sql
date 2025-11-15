@@ -23,17 +23,6 @@ CREATE TABLE dbo.PropiedadPersona(
 	FOREIGN KEY (tipoAsoId) REFERENCES dbo.TipoAsociacion(idTipoAso)
 );
 GO
-CREATE TABLE dbo.Usuario(
-	idUsuario INT IDENTITY(1,1) PRIMARY KEY,
-	valorDocId NVARCHAR(20) NOT NULL,
-	tipoUser INT,
-	userName NVARCHAR(128) NOT NULL,
-	pass NVARCHAR(128) NOT NULL,
-	estado BIT NOT NULL DEFAULT 1,
-	FOREIGN KEY(tipoUser) REFERENCES dbo.TipoUsuario(idUser),
-	FOREIGN KEY(valorDocId) REFERENCES dbo.Persona(valorDocId)
-);
-GO
 
 CREATE TABLE dbo.Propiedad(
 	idPropiedad INT IDENTITY(1,1) PRIMARY KEY,
@@ -54,15 +43,15 @@ CREATE TABLE dbo.CCPropiedad(
 	idCCPropiedad INT IDENTITY(1,1) PRIMARY KEY,
 	numeroFinca NVARCHAR(128),
 	idCC INT NOT NULL,
-	tipoAso INT NOT NULL,
 	fechaRegistro DATE NOT NULL,
+	fechaFin DATE NULL,
+	activo BIT DEFAULT 0,
 	FOREIGN KEY (idCC) REFERENCES dbo.CCs(id),
-	FOREIGN KEY (tipoAso) REFERENCES dbo.TipoAsociacion(idTipoAso)
 );
 GO
 CREATE TABLE dbo.LecturaMedidor(
 	idLecturaMedidor INT IDENTITY(1,1) PRIMARY KEY,
-	numeroMedidor NVARCHAR(128),
+	numeroMedidor NVARCHAR(128) UNIQUE,
 	tipoMov INT NOT NULL,
 	valor DECIMAL(10,2),
 	fechaLectura DATE NOT NULL,
@@ -118,10 +107,28 @@ CREATE TABLE dbo.OrdenCorte(
 GO
 CREATE TABLE dbo.OrdenReconexion(
     idReconexion INT IDENTITY(1,1) PRIMARY KEY,
-    idOrdenCorte INT NOT NULL,
+    idFactura INT NOT NULL,
     numeroFinca NVARCHAR(128) NOT NULL,
     fechaReconexion DATE NOT NULL,
-    FOREIGN KEY (idOrdenCorte) REFERENCES dbo.OrdenCorte(idOrdenCorte)
+    FOREIGN KEY (idFactura) REFERENCES dbo.Factura(idFactura)
+);
+CREATE TABLE dbo.Usuario(
+idUsuario INT PRIMARY KEY,
+valorDocId NVARCHAR(20) NOT NULL,
+userName NVARCHAR(128) NOT NULL,
+pass NVARCHAR(128) NOT NULL,
+estado BIT NOT NULL DEFAULT 1,
+FOREIGN KEY(valorDocId) REFERENCES dbo.Persona(valorDocId)
+);
+GO
+CREATE TABLE dbo.movimientos(
+id INT IDENTITY (1,1) PRIMARY KEY,
+tipoOperacion NVARCHAR(128),
+idUsuario INT,
+numeroMedidor NVARCHAR(128),
+fechaOp DATE
+FOREIGN KEY(idUsuario) REFERENCES dbo.Usuario(idUsuario),
+FOREIGN KEY(numeroMedidor) REFERENCES dbo.LecturaMedidor(numeroMedidor)
 );
 
 

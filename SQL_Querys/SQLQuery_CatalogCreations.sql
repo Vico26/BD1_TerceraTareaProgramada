@@ -22,9 +22,10 @@ CREATE TABLE dbo.TipoZonaPropiedad(
 	Nombre VARCHAR(128)
 );
 GO
-CREATE TABLE dbo.TipoUsuario(
+CREATE TABLE dbo.UsuarioAdmin(
 	idUser INT PRIMARY KEY,
-	Nombre VARCHAR(128)
+	Nombre VARCHAR(128),
+	pass VARCHAR(128)
 );
 GO
 CREATE TABLE dbo.TipoAsociacion(
