@@ -50,12 +50,13 @@ CREATE TABLE dbo.CCPropiedad(
 );
 GO
 CREATE TABLE dbo.LecturaMedidor(
-	idLecturaMedidor INT IDENTITY(1,1) PRIMARY KEY,
-	numeroMedidor NVARCHAR(128) UNIQUE,
-	tipoMov INT NOT NULL,
-	valor DECIMAL(10,2),
-	fechaLectura DATE NOT NULL,
-	FOREIGN KEY (tipoMov) REFERENCES dbo.TipoMovimientoLecturaMedidor(idTipoMov)
+    idLecturaMedidor INT IDENTITY(1,1) PRIMARY KEY,
+    numeroMedidor NVARCHAR(128) NOT NULL,
+    tipoMov INT NOT NULL,
+    valor DECIMAL(10,2),
+    fechaLectura DATE NOT NULL,
+    FOREIGN KEY (tipoMov) REFERENCES dbo.TipoMovimientoLecturaMedidor(idTipoMov),
+    CONSTRAINT UQ_Lectura UNIQUE (numeroMedidor, fechaLectura)
 );
 GO
 
@@ -125,10 +126,11 @@ CREATE TABLE dbo.movimientos(
 id INT IDENTITY (1,1) PRIMARY KEY,
 tipoOperacion NVARCHAR(128),
 idUsuario INT,
-numeroMedidor NVARCHAR(128),
+idMedidor INT,
 fechaOp DATE
 FOREIGN KEY(idUsuario) REFERENCES dbo.Usuario(idUsuario),
-FOREIGN KEY(numeroMedidor) REFERENCES dbo.LecturaMedidor(numeroMedidor)
+FOREIGN KEY(idMedidor) REFERENCES dbo.LecturaMedidor(idLecturaMedidor)
 );
+GO
 
 
