@@ -1,29 +1,28 @@
 const express = require('express');
 const router = express.Router();
 
-const { procesarPago } = require('./procesarPago');//FALRA PROBAR
-const { registrarLectura } = require('./registrarLectura');
-const { registrarPersona } = require('./registrarPersona');
-const { registrarPropiedad } = require('./registrarPropiedad');
-const { registrarPropiedadPersona } = require('./registrarPropiedadPersona');
-const { logIn } = require('./logIn');//PROBADA Y SI SIRVE
+const { registrarLectura } = require('./registrarLectura');//PROBADA Y SI SIRVE
+const { registrarPersona } = require('./registrarPersona');//PROBADA Y SI SIRVE
+const { registrarPropiedad } = require('./registrarPropiedad');//PROBADA Y SI SIRVE
+const { registrarPropiedadPersona } = require('./registrarPropiedadPersona');//PROBADA Y SI SIRVE  
+const { logIn } = require('./logInAdmin');//PROBADA Y SI SIRVE
 
 const { asignarCCPropiedad } = require("./asignarCCPrpiedad"); //PROBADA Y SI SIRVE
 const { buscarPropiedades } = require("./buscarPropiedades");//PROBADA Y SI SIRVE
 const { asignarPropiedadPersona } = require("./asignarPropiedadPersona");//PROBADA Y SI SIRVE
 
-const { obtenerFacturasPorFinca } = require('./obtenerFacturasPorFinca');//FALTA PROBAR
+const { obtenerFacturasPorFinca } = require('./obtenerFacturasPorFinca');//PROBADA Y SI SIRVE
 const { obtenerLecturasPorMedidor } = require('./obtenerLecturasPorMedidor');//PROBADA Y SI SIRVE
-const { obtenerPagosPorFinca } = require('./obtenerPagosPorFinca');//FALTA PROBAR
+const { obtenerPagosPorFinca } = require('./obtenerPagosPorFinca');//PROBADA Y SI SIRVE
 
-const { pagarFactura } = require('./pagarFactura');//FALTA PROBAR
+const { pagarFactura } = require('./pagarFactura');//POBRADA Y SI SIRVE
 
-const { procesoMasivoFacturacion } = require('./procesoMasivoFacturacion');
-const { procesoMasivoCortes } = require('./procesoMasivoCortes');
-const { procesoMasivoReconexion } = require('./procesoMasivoReconexion');
+const { procesoMasivoFacturacion } = require('./procesoMasivoFacturacion');//PROBADA Y SI SIRVE
+const { procesoMasivoCortes } = require('./procesoMasivoCortes');//PROBADA Y SI SIRVE 
+const { procesoMasivoReconexion } = require('./procesoMasivoReconexion');//PROBADA Y SI SIRVE
 
 
-router.post('/login', async (req, res) => {
+router.post('/loginAdmin', async (req, res) => {
     try {
         const { Username, Pass } = req.body;
 
@@ -117,27 +116,6 @@ router.get('/buscarPropiedades', async (req, res) => {
     }
 });
 
-
-router.post('/procesarPago', async (req, res) => {
-    try {
-        const { numeroFinca, tipoMedioPago, numeroRef, fechaPago } = req.body;
-
-        if (!numeroFinca || !tipoMedioPago || !numeroRef || !fechaPago)
-            return res.status(400).json({ error: "Faltan datos" });
-
-        const resultado = await procesarPago(numeroFinca, tipoMedioPago, numeroRef, fechaPago);
-
-        if (resultado.returnValue !== 0) {
-            return res.status(400).json({ CodigoError: resultado.returnValue });
-        }
-
-        res.json({ success: true, message: "Pago procesado exitosamente" });
-
-    } catch (err) {
-        console.error("Error en /procesarPago:", err);
-        res.status(500).json({ error: "Error interno del servidor" });
-    }
-});
 
 router.post('/pagarFactura', async (req, res) => {
     try {

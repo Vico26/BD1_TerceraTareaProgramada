@@ -29,4 +29,4 @@ async function obtenerFacturasPorFinca(numeroFinca) {
 
 module.exports = { obtenerFacturasPorFinca };
 
-obtenerFacturasPorFinca('F-0012');
+//obtenerFacturasPorFinca('F-0029');

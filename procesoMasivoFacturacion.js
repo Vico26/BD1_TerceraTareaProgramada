@@ -1,5 +1,4 @@
-
-const { sql, config } = require('./db'); // tu archivo de configuración
+const { sql, config } = require('./db'); 
 
 async function procesoMasivoFacturacion(fechaOperacion) {
     try {
@@ -14,5 +13,10 @@ async function procesoMasivoFacturacion(fechaOperacion) {
         return { success: false, error: err.message };
     }
 }
+
+(async () => {
+    const resultado = await procesoMasivoFacturacion('2025-11-24');
+    console.log("RESULTADO:", resultado);
+})();
 
 module.exports = { procesoMasivoFacturacion };

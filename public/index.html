@@ -3,9 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Servicios publicos</title>
+    <title>Servicios Públicos - Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #191930;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .login-container {
+            background-color: #22237e;
+            padding: 30px 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-container h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #ffffff;
+        }
+
+        .login-container input[type="text"],
+        .login-container input[type="password"] {
+            width: 100%;
+            padding: 12px 10px;
+            margin: 8px 0 16px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        .login-container button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4562e0;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .login-container button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-    
+    <div class="login-container">
+        <h2>Log In Administrador</h2>
+        <form id="loginForm">
+            <input type="text" id="username" name="username" placeholder="Usuario" required>
+            <input type="password" id="password" name="password" placeholder="Contraseña" required>
+            <button type="submit">Ingresar</button>
+        </form>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const Username = document.getElementById('username').value;
+            const Pass = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ Username, Pass })
+                });
+
+                const data = await response.json();
+
+                if(data.success){
+                    alert('Login exitoso');
+                    // Redirigir a otra página después del login
+                    window.location.href = '/options.html';
+                } else {
+                    alert('Error en login: ' + (data.CodigoError || data.error));
+                }
+
+            } catch(err) {
+                console.error('Error en login:', err);
+                alert('Error de conexión con el servidor');
+            }
+        });
+    </script>
 </body>
 </html>
+

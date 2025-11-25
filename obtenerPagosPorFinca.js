@@ -1,18 +1,29 @@
-
-const { sql, config } = require('./db'); // tu archivo de configuración
+const sql = require('mssql');
+const { config } = require('./db');
 
 async function obtenerPagosPorFinca(numeroFinca) {
     try {
         const pool = await sql.connect(config);
+        
+        console.log("BUSCANDO PAGOS PARA:", numeroFinca);
+
         const result = await pool.request()
             .input('numeroFinca', sql.NVarChar(128), numeroFinca)
             .execute('sp_ObtenerPagosPorFinca');
 
-        return { success: result.returnValue === 0, returnValue: result.returnValue, recordset: result.recordset };
+        console.log("RETURN VALUE:", result.returnValue);
+        console.log("RECORDSET:", result.recordset);
+
+        return { 
+            success: result.returnValue === 0,
+            returnValue: result.returnValue,
+            recordset: result.recordset 
+        };
+
     } catch (err) {
         console.error('Error en obtenerPagosPorFinca:', err);
         return { success: false, error: err.message };
     }
 }
-
+//obtenerPagosPorFinca('F-0029');
 module.exports = { obtenerPagosPorFinca };

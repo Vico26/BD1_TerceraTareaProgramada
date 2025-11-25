@@ -25,4 +25,14 @@ async function pagarFactura(idFactura, tipoMedioPago, numeroRef, fechaPago) {
     }
 }
 
+/*(async () => {
+    const resultado = await pagarFactura(
+        31,              // idFactura
+        1,               // tipoMedioPago
+        'Pago-31-Test',  // numeroRef de prueba
+        '2025-07-23'     // fechaPago
+    );
+    console.log("RESULTADO DEL PAGO:", resultado);
+})();*/
+
 module.exports = { pagarFactura };
