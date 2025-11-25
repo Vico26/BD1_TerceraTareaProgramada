@@ -1,5 +1,5 @@
-
-const config = require('./dbConfig'); // ajusta según tu proyecto
+const sql = require('mssql');
+const { config } = require('./db');
 
 async function procesarOperacionesPorFecha(pathXML) {
     try {

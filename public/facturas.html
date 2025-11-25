@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facturas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #2d2fa3;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+        }
+
+        h2 {
+            text-align: center;
+            color: #fdfdfd;
+        }
+
+        .search-panel {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .search-panel input[type="text"] {
+            padding: 10px;
+            width: 200px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+
+        .search-panel button {
+            padding: 10px 15px;
+            border: none;
+            background-color: #4562e0;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .search-panel button:hover {
+            background-color: #0056b3;
+        }
+
+        .results-panel {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #4562e0;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Facturas por Finca</h2>
+
+        <div class="search-panel">
+            <input type="text" id="numeroFinca" placeholder="Número de Finca">
+            <button onclick="buscarPorFinca()">Buscar</button>
+        </div>
+
+        <div class="results-panel" id="resultsPanel">
+            <!-- Aquí se mostrarán los resultados -->
+        </div>
+    </div>
+
+    <script>
+        async function buscarPorFinca() {
+            const numeroFinca = document.getElementById('numeroFinca').value.trim();
+            const panel = document.getElementById('resultsPanel');
+
+            if(!numeroFinca) {
+                alert('Ingresa un número de finca');
+                return;
+            }
+
+            panel.innerHTML = '<p>Cargando...</p>';
+
+            try {
+                const response = await fetch(`/api/facturas/${numeroFinca}`);
+                const data = await response.json();
+
+                if(data.error) {
+                    panel.innerHTML = `<p>${data.error}</p>`;
+                    return;
+                }
+
+                if(data.length === 0) {
+                    panel.innerHTML = '<p>No se encontraron facturas</p>';
+                    return;
+                }
+
+                // Construir tabla
+                let tabla = '<table><tr><th>ID Factura</th><th>Fecha</th><th>Total</th><th>Estado</th></tr>';
+                data.forEach(f => {
+                    tabla += `<tr>
+                                <td>${f.idFactura}</td>
+                                <td>${f.fechaFactura}</td>
+                                <td>${f.totalAPagarFinal || f.monto}</td>
+                                <td>${f.estado === 1 ? 'Pendiente' : 'Pagada'}</td>
+                              </tr>`;
+                });
+                tabla += '</table>';
+
+                panel.innerHTML = tabla;
+
+            } catch(err) {
+                console.error(err);
+                panel.innerHTML = '<p>Error de conexión con el servidor</p>';
+            }
+        }
+    </script>
+</body>
+</html>
+

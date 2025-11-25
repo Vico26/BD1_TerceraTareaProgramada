@@ -63,7 +63,7 @@ function manejarRespuestaSP(res, resultado, recordsetOK = true) {
 }
 
 
-router.get('/facturas/:numeroFinca', async (req, res) => {
+router.get('/facturas/:numeroFinca', async (req, res) => {//PROBAR EN INTERFAZ
     try {
         const numeroFinca = req.params.numeroFinca?.trim();
         if (!numeroFinca) return res.status(400).json({ error: 'Falta numeroFinca' });

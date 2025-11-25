@@ -105,11 +105,11 @@
         </div>
 
         <div class="sidebar">
-            <button onclick="abrirSeccion('facturas')">Facturas</button>
-            <button onclick="abrirSeccion('pagos')">Pagos</button>
-            <button onclick="abrirSeccion('registrar')">Registrar</button>
-            <button onclick="abrirSeccion('consultas')">Consultas</button>
-            <button onclick="abrirSeccion('procesos')">Activar Procesos</button>
+            <button onclick="abrirSeccion('facturas.html')">Facturas</button>
+            <button onclick="abrirSeccion('pagos.html')">Pagos</button>
+            <button onclick="abrirSeccion('registrar.html')">Registrar</button>
+            <button onclick="abrirSeccion('asignaciones.html')">Asignaciones</button>
+            <button onclick="abrirSeccion('procesos.html')">Activar Procesos</button>
         </div>
     </main>
 
@@ -121,11 +121,10 @@
             // Aquí luego puedes hacer fetch al servidor y mostrar resultados reales
         }
 
-        function abrirSeccion(seccion) {
-            const panel = document.getElementById('resultsPanel');
-            panel.innerHTML = `<p>Sección seleccionada: <strong>${seccion}</strong></p>`;
-            // Aquí puedes manejar la lógica para mostrar cada sección
+        function abrirSeccion(url) {
+            window.location.href = url; // Redirige a otro HTML
         }
     </script>
 </body>
 </html>
+
