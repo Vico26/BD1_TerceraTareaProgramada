@@ -1,24 +1,25 @@
 const express = require('express');
+const path = require('path'); // para manejar rutas de archivos
 const cors = require('cors');
-const bodyParser = require('body-parser');
-
-// Importar todas las rutas desde serverProcesos.js
-const procesosRouter = require('./serverProcesos');
+const procesosRoutes = require('./serverProcesos');
 
 const app = express();
 const PORT = 3000;
 
 // Middlewares
 app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Rutas
-app.use('/api', procesosRouter);
+// Rutas de la API
+app.use('/api', procesosRoutes);
 
-// Ruta de prueba
+// Servir archivos estáticos (index.html, CSS, JS)
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Ruta raíz: enviar index.html
 app.get('/', (req, res) => {
-    res.send('Servidor funcionando correctamente!');
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Iniciar servidor

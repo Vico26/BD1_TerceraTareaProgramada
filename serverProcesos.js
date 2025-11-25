@@ -7,7 +7,7 @@ const { registrarPropiedad } = require('./registrarPropiedad');//PROBADA Y SI SI
 const { registrarPropiedadPersona } = require('./registrarPropiedadPersona');//PROBADA Y SI SIRVE  
 const { logIn } = require('./logInAdmin');//PROBADA Y SI SIRVE
 
-const { asignarCCPropiedad } = require("./asignarCCPrpiedad"); //PROBADA Y SI SIRVE
+const { asignarCCPropiedad } = require("./asignarCCPropiedad"); //PROBADA Y SI SIRVE
 const { buscarPropiedades } = require("./buscarPropiedades");//PROBADA Y SI SIRVE
 const { asignarPropiedadPersona } = require("./asignarPropiedadPersona");//PROBADA Y SI SIRVE
 
@@ -18,11 +18,11 @@ const { obtenerPagosPorFinca } = require('./obtenerPagosPorFinca');//PROBADA Y S
 const { pagarFactura } = require('./pagarFactura');//POBRADA Y SI SIRVE
 
 const { procesoMasivoFacturacion } = require('./procesoMasivoFacturacion');//PROBADA Y SI SIRVE
-const { procesoMasivoCortes } = require('./procesoMasivoCortes');//PROBADA Y SI SIRVE 
+const { procesoMasivoCortes } = require('./procesoMasivoCorte');//PROBADA Y SI SIRVE 
 const { procesoMasivoReconexion } = require('./procesoMasivoReconexion');//PROBADA Y SI SIRVE
 
 
-router.post('/loginAdmin', async (req, res) => {
+router.post('/loginAdmin', async (req, res) => { //YA SIRVE EN INDEX.HTML
     try {
         const { Username, Pass } = req.body;
 
@@ -286,12 +286,12 @@ router.post('/registrarPropiedadPersona', async (req, res) => {
 });
 
 
-router.post("/asignar/cc-propiedad", async (req, res) => {
+router.post("/asignarCCPropiedad", async (req, res) => {
     try {
         const resultado = await asignarCCPropiedad(req.body);
         res.status(200).json(resultado);
     } catch (err) {
-        console.error("Error en /asignar/cc-propiedad:", err);
+        console.error("Error en /asignarCCPropiedad", err);
         res.status(500).json({ error: "Error interno del servidor" });
     }
 });

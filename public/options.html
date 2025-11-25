@@ -3,9 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESOOO</title>
+    <title>Opciones - Servicios Públicos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #99b9eb;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            background-color: #22237e;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .search-bar {
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            background-color: #ececec;
+        }
+
+        .search-bar input[type="text"] {
+            width: 50%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px 0 0 6px;
+            outline: none;
+        }
+
+        .search-bar button {
+            padding: 10px 20px;
+            border: none;
+            background-color: #4562e0;
+            color: white;
+            border-radius: 0 6px 6px 0;
+            cursor: pointer;
+        }
+
+        .search-bar button:hover {
+            background-color: #0056b3;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+        }
+
+        .results-panel {
+            flex: 3;
+            background-color: white;
+            margin: 20px;
+            border-radius: 10px;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .sidebar {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+
+        .sidebar button {
+            padding: 15px;
+            margin-bottom: 15px;
+            border: none;
+            border-radius: 6px;
+            background-color: #4562e0;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .sidebar button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-    
+    <header>
+        <h1>Opciones - Servicios Públicos</h1>
+    </header>
+
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Buscar...">
+        <button onclick="buscar()">Buscar</button>
+    </div>
+
+    <main>
+        <div class="results-panel" id="resultsPanel">
+            <p>Los resultados de la búsqueda</p>
+        </div>
+
+        <div class="sidebar">
+            <button onclick="abrirSeccion('facturas')">Facturas</button>
+            <button onclick="abrirSeccion('pagos')">Pagos</button>
+            <button onclick="abrirSeccion('registrar')">Registrar</button>
+            <button onclick="abrirSeccion('consultas')">Consultas</button>
+            <button onclick="abrirSeccion('procesos')">Activar Procesos</button>
+        </div>
+    </main>
+
+    <script>
+        function buscar() {
+            const query = document.getElementById('searchInput').value;
+            const panel = document.getElementById('resultsPanel');
+            panel.innerHTML = `<p>Buscando: <strong>${query}</strong>...</p>`;
+            // Aquí luego puedes hacer fetch al servidor y mostrar resultados reales
+        }
+
+        function abrirSeccion(seccion) {
+            const panel = document.getElementById('resultsPanel');
+            panel.innerHTML = `<p>Sección seleccionada: <strong>${seccion}</strong></p>`;
+            // Aquí puedes manejar la lógica para mostrar cada sección
+        }
+    </script>
 </body>
 </html>

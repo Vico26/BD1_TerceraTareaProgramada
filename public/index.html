@@ -76,13 +76,13 @@
             const Pass = document.getElementById('password').value;
 
             try {
-                const response = await fetch('/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ Username, Pass })
-                });
+                const response = await fetch('/api/loginAdmin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ Username, Pass })});
+
 
                 const data = await response.json();
 
