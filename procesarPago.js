@@ -1,22 +1,28 @@
 const sql = require('mssql');
-const config = require('./dbConfig'); // tu configuración de SQL Server
+const { config } = require('./db'); 
 
-async function procesarPago(numeroFinca, tipoMedioPago, numeroRef, fechaPago) {
+async function pagarFactura(numeroFinca, tipoMedioPago, numeroRef, fechaPago) {
     try {
         const pool = await sql.connect(config);
+        console.log("ENVIANDO:", { numeroFinca, tipoMedioPago, numeroRef, fechaPago });
+
         const result = await pool.request()
             .input('numeroFinca', sql.NVarChar(128), numeroFinca)
             .input('tipoMedioPago', sql.Int, tipoMedioPago)
             .input('numeroRef', sql.NVarChar(128), numeroRef)
             .input('fechaPago', sql.Date, fechaPago)
-            .execute('sp_ProcesarPago');
+            .execute('sp_PagarFactura');
 
-        // El returnValue viene del SP (0 = éxito, otros = error)
-        return { success: result.returnValue === 0, returnValue: result.returnValue };
+        console.log("RESULTADO:", result);
+        return { 
+            success: result.returnValue === 0,
+            returnValue: result.returnValue,
+            recordset: result.recordset
+        };
     } catch (err) {
-        console.error('Error en procesarPago:', err);
+        console.error('Error en pagarFactura:', err);
         return { success: false, error: err.message };
     }
 }
 
-module.exports = { procesarPago };
+module.exports = { pagarFactura };

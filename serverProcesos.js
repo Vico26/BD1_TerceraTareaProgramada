@@ -1,27 +1,49 @@
 const express = require('express');
 const router = express.Router();
 
-const { procesarFactura } = require('./procesarFactura'); 
-const { procesarPago } = require('./procesarPago');
+const { procesarPago } = require('./procesarPago');//FALRA PROBAR
 const { registrarLectura } = require('./registrarLectura');
 const { registrarPersona } = require('./registrarPersona');
 const { registrarPropiedad } = require('./registrarPropiedad');
 const { registrarPropiedadPersona } = require('./registrarPropiedadPersona');
+const { logIn } = require('./logIn');//PROBADA Y SI SIRVE
 
-const { asignarCCPropiedad } = require("./asignarCCPrpiedad");
-const { buscarPropiedades } = require("./buscarPropiedades");
-const { asignarPropiedadPersona } = require("./asignarPropiedadPersona");
+const { asignarCCPropiedad } = require("./asignarCCPrpiedad"); //PROBADA Y SI SIRVE
+const { buscarPropiedades } = require("./buscarPropiedades");//PROBADA Y SI SIRVE
+const { asignarPropiedadPersona } = require("./asignarPropiedadPersona");//PROBADA Y SI SIRVE
 
-const { obtenerFacturasPorFinca } = require('./obtenerFacturasPorFinca');
-const { obtenerLecturasPorMedidor } = require('./obtenerLecturasPorMedidor');
-const { obtenerPagosPorFinca } = require('./obtenerPagosPorFinca');
+const { obtenerFacturasPorFinca } = require('./obtenerFacturasPorFinca');//FALTA PROBAR
+const { obtenerLecturasPorMedidor } = require('./obtenerLecturasPorMedidor');//PROBADA Y SI SIRVE
+const { obtenerPagosPorFinca } = require('./obtenerPagosPorFinca');//FALTA PROBAR
 
-const { pagarFactura } = require('./pagarFactura');
+const { pagarFactura } = require('./pagarFactura');//FALTA PROBAR
 
 const { procesoMasivoFacturacion } = require('./procesoMasivoFacturacion');
 const { procesoMasivoCortes } = require('./procesoMasivoCortes');
 const { procesoMasivoReconexion } = require('./procesoMasivoReconexion');
 
+
+router.post('/login', async (req, res) => {
+    try {
+        const { Username, Pass } = req.body;
+
+        if (!Username || !Pass) {
+            return res.status(400).json({ error: 'Faltan datos' });
+        }
+
+        const resultado = await logIn(Username, Pass);
+
+        if (resultado.success) {
+            return res.json({ success: true, message: 'Login exitoso' });
+        } else {
+            return res.status(400).json({ success: false, CodigoError: resultado.codigoError });
+        }
+
+    } catch (err) {
+        console.error("Error en /login:", err);
+        res.status(500).json({ error: "Error interno del servidor" });
+    }
+});
 
 // Función para manejar respuestas comunes de SP
 function manejarRespuestaSP(res, resultado, recordsetOK = true) {

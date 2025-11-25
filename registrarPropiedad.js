@@ -1,4 +1,4 @@
-const sql = require('mssql');
+
 const config = require('./dbConfig'); // tu configuración de SQL Server
 
 async function registrarPropiedad(numeroFinca, numeroMedidor, areaM2, tipoUso, tipoZona, valorFiscal, fechaRegistro) {

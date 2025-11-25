@@ -1,9 +1,10 @@
 const sql = require('mssql');
-const { sql, config } = require('./db'); // tu archivo de configuración
+const { config } = require('./db');
 
-async function asignarCCPropiedad({ numeroFinca, idCC, tipoAso, fechaRegistro }) {
+async function asignarCCPropiedad(numeroFinca, idCC, tipoAso, fechaRegistro) {
     try {
         const pool = await sql.connect(config);
+        console.log("ENVIANDO:", numeroFinca);
         const result = await pool.request()
             .input('numeroFinca', sql.NVarChar(128), numeroFinca)
             .input('idCC', sql.Int, idCC)
@@ -11,11 +12,12 @@ async function asignarCCPropiedad({ numeroFinca, idCC, tipoAso, fechaRegistro })
             .input('fechaRegistro', sql.Date, fechaRegistro)
             .execute('sp_AsignarCCPropiedad');
 
-        return { success: result.returnValue === 0, returnValue: result.returnValue };
+        console.log("RESULTADO:", result.returnValue);
+
     } catch (err) {
-        console.error('Error en asignarCCPropiedad:', err);
-        return { success: false, error: err.message };
+        console.error(err);
     }
 }
 
 module.exports = { asignarCCPropiedad };
+//asignarCCPropiedad("F-0012",5,1,"2025-11-24");

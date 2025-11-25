@@ -1,9 +1,11 @@
 const sql = require('mssql');
-const { sql, config } = require('./db'); // tu archivo de configuración
+const { config } = require('./db');
 
-async function pagarFactura({ idFactura, tipoMedioPago, numeroRef, fechaPago }) {
+async function pagarFactura(idFactura, tipoMedioPago, numeroRef, fechaPago) {
     try {
         const pool = await sql.connect(config);
+        console.log("ENVIANDO:", { idFactura, tipoMedioPago, numeroRef, fechaPago });
+
         const result = await pool.request()
             .input('idFactura', sql.Int, idFactura)
             .input('tipoMedioPago', sql.Int, tipoMedioPago)
@@ -11,9 +13,14 @@ async function pagarFactura({ idFactura, tipoMedioPago, numeroRef, fechaPago }) 
             .input('fechaPago', sql.Date, fechaPago)
             .execute('sp_PagarFactura');
 
-        return { success: result.returnValue === 0, returnValue: result.returnValue, recordset: result.recordset };
+        console.log("RESULTADO:", result);
+        return { 
+            success: result.returnValue === 0,
+            returnValue: result.returnValue,
+            recordset: result.recordset
+        };
     } catch (err) {
-        console.error('Error en pagarFactura:', err);
+        console.error(err);
         return { success: false, error: err.message };
     }
 }

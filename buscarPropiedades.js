@@ -1,19 +1,28 @@
 const sql = require('mssql');
-const { sql, config } = require('./db'); // tu archivo de configuración
+const { config } = require('./db');
 
-async function buscarPropiedades({ tipoBusqueda, valorBusqueda }) {
+async function buscarPropiedades(valorBusqueda) {
     try {
         const pool = await sql.connect(config);
+
+        console.log("BUSCANDO:", valorBusqueda);
+
         const result = await pool.request()
-            .input('tipoBusqueda', sql.Int, tipoBusqueda)
             .input('valorBusqueda', sql.NVarChar(128), valorBusqueda)
             .execute('sp_BuscarPropiedades');
 
-        return { success: true, recordset: result.recordset };
+        console.log("RESULTADO:");
+        console.log(result.recordset);
+
     } catch (err) {
-        console.error('Error en buscarPropiedades:', err);
-        return { success: false, error: err.message };
+        console.error("ERROR:", err);
     }
 }
 
 module.exports = { buscarPropiedades };
+
+// Buscar por finca:
+//buscarPropiedades("F-0012");
+
+// O buscar por propietario:
+//buscarPropiedades("10000053");

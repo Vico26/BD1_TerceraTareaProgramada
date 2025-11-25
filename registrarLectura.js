@@ -1,4 +1,4 @@
-const sql = require('mssql');
+
 const config = require('./dbConfig'); // tu configuración de SQL Server
 
 // Registrar lectura de medidor

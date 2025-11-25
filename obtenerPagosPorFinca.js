@@ -1,4 +1,4 @@
-const sql = require('mssql');
+
 const { sql, config } = require('./db'); // tu archivo de configuración
 
 async function obtenerPagosPorFinca(numeroFinca) {
