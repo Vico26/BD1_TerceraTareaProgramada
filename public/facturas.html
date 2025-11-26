@@ -54,6 +54,7 @@
             padding: 15px;
             border-radius: 8px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
         }
 
         table {
@@ -74,19 +75,51 @@
             background-color: #4562e0;
             color: white;
         }
+
+        .btn-center {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .btn-center button {
+            padding: 10px 20px;
+            background-color: #4562e0;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn-center button:hover {
+            background-color: #0056b3;
+        }
+
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Facturas por Finca</h2>
 
+        <!-- BUSCAR POR FINCA -->
         <div class="search-panel">
             <input type="text" id="numeroFinca" placeholder="Número de Finca">
             <button onclick="buscarPorFinca()">Buscar</button>
         </div>
 
         <div class="results-panel" id="resultsPanel">
-            <!-- Aquí se mostrarán los resultados -->
+            <p>Ingrese un número de finca para buscar facturas.</p>
+        </div>
+
+        <!-- TODAS LAS FACTURAS -->
+        <h2>Todas las Facturas</h2>
+
+        <div class="btn-center">
+            <button onclick="mostrarTodasLasFacturas()">Mostrar Todas</button>
+        </div>
+
+        <div class="results-panel" id="todasPanel">
+            <p>Haz clic en "Mostrar Todas" para ver todas las facturas.</p>
         </div>
     </div>
 
@@ -95,7 +128,7 @@
             const numeroFinca = document.getElementById('numeroFinca').value.trim();
             const panel = document.getElementById('resultsPanel');
 
-            if(!numeroFinca) {
+            if (!numeroFinca) {
                 alert('Ingresa un número de finca');
                 return;
             }
@@ -106,31 +139,67 @@
                 const response = await fetch(`/api/facturas/${numeroFinca}`);
                 const data = await response.json();
 
-                if(data.error) {
+                if (data.error) {
                     panel.innerHTML = `<p>${data.error}</p>`;
                     return;
                 }
 
-                if(data.length === 0) {
+                if (data.length === 0) {
                     panel.innerHTML = '<p>No se encontraron facturas</p>';
                     return;
                 }
 
-                // Construir tabla
                 let tabla = '<table><tr><th>ID Factura</th><th>Fecha</th><th>Total</th><th>Estado</th></tr>';
+                    data.forEach(f => {
+                tabla += `<tr>
+                <td>${f.idFactura || f.numeroFactura}</td>
+                <td>${f.fechaFactura}</td>
+                <td>${f.totalAPagarFinal || f.monto}</td>
+                <td>${f.estado === 1 ? 'Pendiente' : 'Pagada'}</td>
+              </tr>`;});
+              tabla += '</table>';
+
+                panel.innerHTML = tabla;
+
+            } catch (err) {
+                console.error(err);
+                panel.innerHTML = '<p>Error de conexión con el servidor</p>';
+            }
+        }
+
+        async function mostrarTodasLasFacturas() {
+            const panel = document.getElementById('todasPanel');
+            panel.innerHTML = '<p>Cargando...</p>';
+
+            try {
+                const response = await fetch('/api/facturas');
+                const data = await response.json();
+
+                if (data.error) {
+                    panel.innerHTML = `<p>${data.error}</p>`;
+                    return;
+                }
+
+                if (data.length === 0) {
+                    panel.innerHTML = '<p>No hay facturas registradas</p>';
+                    return;
+                }
+
+                let tabla = '<table><tr><th>ID Factura</th><th>Fecha</th><th>Total</th><th>Estado</th><th>Número Finca</th></tr>';
                 data.forEach(f => {
                     tabla += `<tr>
                                 <td>${f.idFactura}</td>
                                 <td>${f.fechaFactura}</td>
                                 <td>${f.totalAPagarFinal || f.monto}</td>
                                 <td>${f.estado === 1 ? 'Pendiente' : 'Pagada'}</td>
+                                <td>${f.numeroFinca || '-'}</td>
                               </tr>`;
                 });
                 tabla += '</table>';
 
                 panel.innerHTML = tabla;
 
-            } catch(err) {
+            } catch (err) {
                 console.error(err);
                 panel.innerHTML = '<p>Error de conexión con el servidor</p>';
             }
@@ -138,4 +207,5 @@
     </script>
 </body>
 </html>
+
 

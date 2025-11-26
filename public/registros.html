@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registros</title>
+
+<style>
+    body {
+        background-color: #2d2fa3;
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        margin: 0;
+    }
+
+    h1 {
+        text-align: center;
+        color: white;
+        margin-bottom: 30px;
+    }
+
+    .panel {
+        background: white;
+        padding: 20px;
+        margin-bottom: 30px;
+        border-radius: 8px;
+        max-width: 900px;
+        margin-left: auto;
+        margin-right: auto;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    .panel h2 {
+        margin-top: 0;
+        color: #303f9f;
+    }
+
+    label {
+        display: block;
+        margin-top: 10px;
+        font-weight: bold;
+    }
+
+    input, select {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        border-radius: 5px;
+        border: 1px solid #bbb;
+    }
+
+    button {
+        margin-top: 15px;
+        padding: 12px 18px;
+        background-color: #303f9f;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 15px;
+    }
+
+    button:hover {
+        background-color: #1a237e;
+    }
+
+    .msg {
+        margin-top: 10px;
+        font-weight: bold;
+    }
+</style>
+</head>
+
+<body>
+
+<h1>Panel de Registros</h1>
+
+
+<div class="panel">
+    <h2>Registrar Persona</h2>
+
+    <label>Valor Documento Identidad</label>
+    <input type="text" id="p_valorDocId">
+
+    <label>Nombre Completo</label>
+    <input type="text" id="p_nombre">
+
+    <label>Email</label>
+    <input type="text" id="p_email">
+
+    <label>Teléfono</label>
+    <input type="text" id="p_telefono">
+
+    <label>Fecha Registro</label>
+    <input type="date" id="p_fecha">
+
+    <button onclick="registrarPersona()">Registrar Persona</button>
+
+    <div id="msgPersona" class="msg"></div>
+</div>
+
+
+
+
+<div class="panel">
+    <h2>Registrar Propiedad</h2>
+
+    <label>Número de Finca</label>
+    <input type="text" id="pr_finca">
+
+    <label>Número de Medidor</label>
+    <input type="text" id="pr_medidor">
+
+    <label>Área (m²)</label>
+    <input type="number" id="pr_area">
+
+    <label>Tipo de Uso</label>
+    <select id="pr_tipoUso"></select>
+
+    <label>Tipo de Zona</label>
+    <select id="pr_tipoZona"></select>
+
+    <label>Valor Fiscal</label>
+    <input type="number" id="pr_valorFiscal">
+
+    <label>Fecha Registro</label>
+    <input type="date" id="pr_fecha">
+
+    <button onclick="registrarPropiedad()">Registrar Propiedad</button>
+
+    <div id="msgPropiedad" class="msg"></div>
+</div>
+
+
+
+
+<div class="panel">
+    <h2>Registrar Asociación Propiedad-Persona</h2>
+
+    <label>Valor Documento Identidad</label>
+    <input type="text" id="pp_valorDocId">
+
+    <label>Número de Finca</label>
+    <input type="text" id="pp_finca">
+
+    <label>Tipo de Asociación</label>
+    <select id="pp_tipoAso"></select>
+
+
+    <label>Fecha Registro</label>
+    <input type="date" id="pp_fecha">
+
+    <button onclick="registrarAsociacion()">Registrar Asociación</button>
+
+    <div id="msgAsociacion" class="msg"></div>
+</div>
+
+
+
+<script>
+
+document.addEventListener("DOMContentLoaded", () => {
+    cargarTipoUso();
+    cargarTipoZona();
+    cargarTipoAsociacion();   
+});
+
+
+
+async function cargarTipoUso() {
+    try {
+        const res = await fetch("/api/tipoUsoPropiedad");
+        const data = await res.json();
+
+        let sel = document.getElementById("pr_tipoUso");
+        sel.innerHTML = "";
+
+        data.forEach(t => {
+            sel.innerHTML += `<option value="${t.idTipoUso}">${t.nombreTipoUso}</option>`;
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function cargarTipoAsociacion() {
+    try {
+        const res = await fetch("/api/tipoAsociacion");
+        const data = await res.json();
+
+        let sel = document.getElementById("pp_tipoAso");
+        sel.innerHTML = "";
+
+        data.forEach(t => {
+            sel.innerHTML += `<option value="${t.idTipoAso}">${t.nombreTipoAso}</option>`;
+        });
+
+    } catch (err) {
+        console.error("Error cargando tipoAsociacion:", err);
+    }
+}
+
+async function cargarTipoZona() {
+    try {
+        const res = await fetch("/api/tipoZonaPropiedad");
+        const data = await res.json();
+
+        let sel = document.getElementById("pr_tipoZona");
+        sel.innerHTML = "";
+
+        data.forEach(t => {
+            sel.innerHTML += `<option value="${t.idTipoZona}">${t.nombreTipoZona}</option>`;
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+
+
+
+
+async function registrarPersona() {
+    const payload = {
+        valorDocId: document.getElementById("p_valorDocId").value,
+        Nombre: document.getElementById("p_nombre").value,
+        email: document.getElementById("p_email").value,
+        telefono: document.getElementById("p_telefono").value,
+        fechaRegistro: document.getElementById("p_fecha").value
+    };
+
+    let msg = document.getElementById("msgPersona");
+    msg.innerHTML = "Procesando...";
+
+    const res = await fetch("/api/registrarPersona", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    msg.innerHTML = data.success ? "Persona registrada correctamente" : "Error: " + JSON.stringify(data);
+}
+
+
+
+
+async function registrarPropiedad() {
+    const payload = {
+        numeroFinca: document.getElementById("pr_finca").value,
+        numeroMedidor: document.getElementById("pr_medidor").value,
+        areaM2: parseInt(document.getElementById("pr_area").value),
+        tipoUso: parseInt(document.getElementById("pr_tipoUso").value),
+        tipoZona: parseInt(document.getElementById("pr_tipoZona").value),
+        valorFiscal: parseFloat(document.getElementById("pr_valorFiscal").value),
+        fechaRegistro: document.getElementById("pr_fecha").value
+    };
+
+    let msg = document.getElementById("msgPropiedad");
+    msg.innerHTML = "Procesando...";
+
+    const res = await fetch("/api/registrarPropiedad", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    msg.innerHTML = data.success ? "Propiedad registrada correctamente" : "Error: " + JSON.stringify(data);
+}
+
+
+
+
+
+async function registrarAsociacion() {
+    const payload = {
+        valorDocId: document.getElementById("pp_valorDocId").value,
+        numeroFinca: document.getElementById("pp_finca").value,
+        tipoAsoId: parseInt(document.getElementById("pp_tipoAso").value),
+        fechaRegistro: document.getElementById("pp_fecha").value
+    };
+
+    let msg = document.getElementById("msgAsociacion");
+    msg.innerHTML = "Procesando...";
+
+    const res = await fetch("/api/registrarPropiedadPersona", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    msg.innerHTML = data.success ? "Asociación registrada correctamente" : "Error: " + JSON.stringify(data);
+}
+
+</script>
+
+</body>
+</html>

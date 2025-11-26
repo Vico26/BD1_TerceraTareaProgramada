@@ -13,12 +13,5 @@ async function procesoMasivoReconexion(fechaOperacion) {
         return { success: false, error: err.message };
     }
 }
-/*(async () => {
-    try {
-        const resultado = await procesoMasivoReconexion('2025-10-15'); // fecha de operación de prueba
-        console.log("RESULTADO DEL PROCESO DE RECONEXIÓN:", resultado);
-    } catch (err) {
-        console.error("ERROR AL PROBAR RECONEXIÓN:", err);
-    }
-})();*/
+
 module.exports = { procesoMasivoReconexion };

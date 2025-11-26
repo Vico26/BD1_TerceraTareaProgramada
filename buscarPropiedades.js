@@ -13,6 +13,7 @@ async function buscarPropiedades(valorBusqueda) {
 
         console.log("RESULTADO:");
         console.log(result.recordset);
+        return result.recordset;
 
     } catch (err) {
         console.error("ERROR:", err);

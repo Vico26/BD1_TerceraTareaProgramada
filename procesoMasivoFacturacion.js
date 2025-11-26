@@ -14,9 +14,5 @@ async function procesoMasivoFacturacion(fechaOperacion) {
     }
 }
 
-(async () => {
-    const resultado = await procesoMasivoFacturacion('2025-11-24');
-    console.log("RESULTADO:", resultado);
-})();
 
 module.exports = { procesoMasivoFacturacion };

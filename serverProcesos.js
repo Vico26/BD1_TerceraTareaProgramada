@@ -14,6 +14,13 @@ const { asignarPropiedadPersona } = require("./asignarPropiedadPersona");//PROBA
 const { obtenerFacturasPorFinca } = require('./obtenerFacturasPorFinca');//PROBADA Y SI SIRVE
 const { obtenerLecturasPorMedidor } = require('./obtenerLecturasPorMedidor');//PROBADA Y SI SIRVE
 const { obtenerPagosPorFinca } = require('./obtenerPagosPorFinca');//PROBADA Y SI SIRVE
+const { obtenerTodosLosPagos } = require('./obtenerPagos');//FALTA PROBAR
+const { obtenerTodasLasFacturas } = require('./obtenerFacturas');//FALTA PROBAR
+const { obtenerTodasLasLecturas } = require('./obtenerLecturas');//FALTA PROBAR
+const { obtenerTipoUsoPropiedad} = require('./obtenerTipoUso');//FALTA PROBAR
+const { obtenerTipoZonaPropiedad } = require('./obtenerTipoDeZona');//FALTA PROBAR
+const { obtenerTipoAsociacion } = require('./obtenerTipoAso');//FALTA PROBAR
+const { obtenerCCPropiedad } = require('./obtenerCCPropiedad');//FALTA PROBAR
 
 const { pagarFactura } = require('./pagarFactura');//POBRADA Y SI SIRVE
 
@@ -108,10 +115,9 @@ router.get('/pagos/:numeroFinca', async (req, res) => {
 
 router.get('/buscarPropiedades', async (req, res) => {
     try {
-        const resultado = await buscarPropiedades(req.query);
+        const resultado = await buscarPropiedades(req.query.valorBusqueda);
         res.json(resultado);
     } catch (err) {
-        console.error("Error en /buscarPropiedades:", err);
         res.status(500).json({ error: "Error interno del servidor" });
     }
 });
@@ -303,6 +309,82 @@ router.post("/asignar/propiedad-persona", async (req, res) => {
     } catch (err) {
         console.error("Error en /asignar/propiedad-persona:", err);
         res.status(500).json({ error: "Error interno del servidor" });
+    }
+});
+
+router.get('/pagos', async (req, res) => {
+    try {
+        const resultado = await obtenerTodosLosPagos();
+        return manejarRespuestaSP(res, resultado);
+
+    } catch (err) {
+        console.error('Error en /pagos', err);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+router.get('/facturas', async (req, res) => {
+    try {
+        const resultado = await obtenerTodasLasFacturas();
+        return manejarRespuestaSP(res, resultado);
+
+    } catch (err) {
+        console.error('Error en /facturas', err);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+router.get('/lecturas', async (req, res) => {
+    try {
+        const resultado = await obtenerTodasLasLecturas();
+        return manejarRespuestaSP(res, resultado);
+
+    } catch (err) {
+        console.error('Error en /lecturas', err);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+router.get('/tipoUsoPropiedad', async (req, res) => {
+    try {
+        const resultado = await obtenerTipoUsoPropiedad();
+        return manejarRespuestaSP(res, resultado);
+
+    } catch (err) {
+        console.error('Error en /tipoUsoPropiedad', err);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+router.get('/tipoZonaPropiedad', async (req, res) => {
+    try {
+        const resultado = await obtenerTipoZonaPropiedad();
+        return manejarRespuestaSP(res, resultado);
+
+    } catch (err) {
+        console.error('Error en /tipoZonaPropiedad', err);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+router.get('/tipoAsociacion', async (req, res) => {
+    try {
+        const resultado = await obtenerTipoAsociacion();
+        return manejarRespuestaSP(res, resultado);
+
+    } catch (err) {
+        console.error('Error en /tipoAsociacion', err);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+router.get('/ccpropiedad', async (req, res) => {
+    try {
+        const resultado = await obtenerCCPropiedad(); // ← tu función del módulo
+        return manejarRespuestaSP(res, resultado);
+    } catch (err) {
+        console.error('Error en /ccpropiedad', err);
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
 

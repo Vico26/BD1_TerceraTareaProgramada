@@ -87,6 +87,21 @@
         .sidebar button:hover {
             background-color: #0056b3;
         }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+
+        th {
+            background-color: #e6e6e6;
+        }
     </style>
 </head>
 <body>
@@ -105,26 +120,79 @@
         </div>
 
         <div class="sidebar">
-            <button onclick="abrirSeccion('facturas.html')">Facturas</button>
+            <button onclick="abrirSeccion('facturas.html')">Facturas</button> 
             <button onclick="abrirSeccion('pagos.html')">Pagos</button>
-            <button onclick="abrirSeccion('registrar.html')">Registrar</button>
+            <button onclick="abrirSeccion('registros.html')">Registrar</button>
             <button onclick="abrirSeccion('asignaciones.html')">Asignaciones</button>
             <button onclick="abrirSeccion('procesos.html')">Activar Procesos</button>
+            <button onclick="abrirSeccion('lecturas.html')">Lecturas de Medidor</button>
         </div>
     </main>
 
     <script>
-        function buscar() {
-            const query = document.getElementById('searchInput').value;
+
+        // Crear HTML de tabla con un recordset
+        function generarTabla(recordset) {
+            if (!recordset || recordset.length === 0) {
+                return "<p>No se encontraron resultados.</p>";
+            }
+
+            let html = "<table><tr>";
+
+            // Encabezados
+            for (let col in recordset[0]) {
+                html += `<th>${col}</th>`;
+            }
+            html += "</tr>";
+
+            // Filas
+            recordset.forEach(row => {
+                html += "<tr>";
+                for (let col in row) {
+                    html += `<td>${row[col]}</td>`;
+                }
+                html += "</tr>";
+            });
+
+            html += "</table>";
+            return html;
+        }
+
+        // Función de búsqueda conectada al backend
+        async function buscar() {
+            const valor = document.getElementById('searchInput').value.trim();
             const panel = document.getElementById('resultsPanel');
-            panel.innerHTML = `<p>Buscando: <strong>${query}</strong>...</p>`;
-            // Aquí luego puedes hacer fetch al servidor y mostrar resultados reales
+
+            if (!valor) {
+                panel.innerHTML = "<p>Ingrese algo para buscar.</p>";
+                return;
+            }
+
+            panel.innerHTML = `<p>Buscando: <strong>${valor}</strong>...</p>`;
+
+            try {
+                const response = await fetch(`/api/buscarPropiedades?valorBusqueda=${encodeURIComponent(valor)}`);
+                const data = await response.json();
+
+                console.log("RESPUESTA:", data);
+
+                if (!data || data.length === 0) {
+                panel.innerHTML = "<p>No se encontraron resultados.</p>";
+                return;
+                        }
+
+                panel.innerHTML = "<h3>Resultados:</h3>" + generarTabla(data);
+            } catch (err) {
+                console.error(err);
+                panel.innerHTML = "<p>Error al comunicarse con el servidor.</p>";
+            }
         }
 
         function abrirSeccion(url) {
-            window.location.href = url; // Redirige a otro HTML
+            window.location.href = url; 
         }
     </script>
 </body>
 </html>
+
 

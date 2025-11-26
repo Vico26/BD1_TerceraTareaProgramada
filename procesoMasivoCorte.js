@@ -15,10 +15,7 @@ async function procesoMasivoCortes(fechaOperacion) {
     }
 }
 
-(async () => {
-    const resultado = await procesoMasivoCortes('2025-11-24');
-    console.log("RESULTADO:", resultado);
-})();
+
 
 
 module.exports = { procesoMasivoCortes };

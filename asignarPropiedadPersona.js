@@ -24,4 +24,4 @@ async function asignarPropiedadPersona(valorDocId, numeroFinca, tipoAsoId, fecha
 
 module.exports = { asignarPropiedadPersona };
 
-asignarPropiedadPersona("10000053","F-0012",1,"2025-11-24");
+//asignarPropiedadPersona("10000053","F-0012",1,"2025-11-24");

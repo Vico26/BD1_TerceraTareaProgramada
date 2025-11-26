@@ -154,7 +154,7 @@
                     document.getElementById('tipoMedioPago').value = '';
                     document.getElementById('numeroRef').value = '';
                     document.getElementById('fechaPago').value = '';
-                    mostrarPagos(); // actualizar listado
+                    mostrarPagos(); 
                 } else {
                     alert('Error: ' + (data.CodigoError || data.error));
                 }
@@ -170,21 +170,23 @@
             panel.innerHTML = '<p>Cargando...</p>';
 
             try {
-                const response = await fetch('/api/pagos'); 
+                const response = await fetch('/api/pagos');
                 const data = await response.json();
 
-                if(data.error) {
-                    panel.innerHTML = `<p>${data.error}</p>`;
+                if (!data.success) {
+                    panel.innerHTML = `<p>${data.error || 'Error desconocido'}</p>`;
                     return;
                 }
 
-                if(data.length === 0) {
+                const pagos = data.recordset;
+
+                if (!pagos || pagos.length === 0) {
                     panel.innerHTML = '<p>No hay pagos registrados</p>';
                     return;
                 }
 
                 let tabla = '<table><tr><th>ID Factura</th><th>Medio de Pago</th><th>Referencia</th><th>Fecha Pago</th></tr>';
-                data.forEach(p => {
+                pagos.forEach(p => {
                     tabla += `<tr>
                                 <td>${p.idFactura}</td>
                                 <td>${p.tipoMedioPago}</td>
@@ -214,21 +216,23 @@
             panel.innerHTML = '<p>Cargando...</p>';
 
             try {
-                const response = await fetch(`/api/pagos/${numeroFinca}`); 
+                const response = await fetch(`/api/pagos/${numeroFinca}`);
                 const data = await response.json();
 
-                if(data.error) {
-                    panel.innerHTML = `<p>${data.error}</p>`;
+                if (!data.success) {
+                    panel.innerHTML = `<p>${data.error || 'Error desconocido'}</p>`;
                     return;
                 }
 
-                if(data.length === 0) {
+                const pagos = data.recordset;
+
+                if (!pagos || pagos.length === 0) {
                     panel.innerHTML = '<p>No hay pagos para esta finca</p>';
                     return;
                 }
 
                 let tabla = '<table><tr><th>ID Factura</th><th>Medio de Pago</th><th>Referencia</th><th>Fecha Pago</th></tr>';
-                data.forEach(p => {
+                pagos.forEach(p => {
                     tabla += `<tr>
                                 <td>${p.idFactura}</td>
                                 <td>${p.tipoMedioPago}</td>
@@ -248,3 +252,4 @@
     </script>
 </body>
 </html>
+

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Asignaciones</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #2d2fa3;
+            margin: 0;
+            padding: 20px;
+        }
+        .panel {
+            border: 1px solid #626bf1;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            background: #f9f9f9;
+            width: 460px;
+        }
+        label {
+            display: block;
+            margin-top: 12px;
+        }
+        input, select {
+            width: 260px;
+            padding: 6px;
+            margin-top: 4px;
+        }
+        button {
+            margin-top: 15px;
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+        h2 {
+            margin-top: 0;
+        }
+        h1 {
+            margin-top: 0;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Asignaciones</h1>
+
+   
+    <div class="panel">
+        <h2>Asignar CC a Propiedad</h2>
+
+        <label>Número de Finca:</label>
+        <input type="text" id="fincaCC">
+
+        <label>ID CC:</label>
+        <select id="selectCC"></select>
+
+        <label>Tipo de Asociación:</label>
+        <select id="selectAsoCC"></select>
+
+        <label>Fecha de Registro:</label>
+        <input type="date" id="fechaCC">
+
+        <button onclick="asignarCC()">Asignar CC</button>
+    </div>
+
+
+
+    <div class="panel">
+        <h2>Asignación Propiedad – Persona</h2>
+
+        <label>Valor Documento Identidad:</label>
+        <input type="text" id="valorDoc">
+
+        <label>Número de Finca:</label>
+        <input type="text" id="fincaPersona">
+
+        <label>Tipo de Asociación:</label>
+        <select id="selectAsoPP"></select>
+
+        <label>Fecha de Registro:</label>
+        <input type="date" id="fechaPP">
+
+        <button onclick="asignarPropiedadPersona()">Asignar Propiedad a Persona</button>
+    </div>
+
+
+
+    <script>
+   
+        async function cargarSelect(url, idSelect, campoId, campoNombre) {
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+
+                if (!data.success && !Array.isArray(data)) {
+                    console.error("Error cargando", url);
+                    return;
+                }
+
+                const select = document.getElementById(idSelect);
+                select.innerHTML = "";
+
+                // Si manejarRespuestaSP lo envuelve
+                const recordset = data.recordset || data;
+
+                recordset.forEach(item => {
+                    const op = document.createElement("option");
+                    op.value = item[campoId];       // ENVÍA ID
+                    op.textContent = item[campoNombre]; // MUESTRA NOMBRE
+                    select.appendChild(op);
+                });
+
+            } catch (err) {
+                console.error("Error:", err);
+            }
+        }
+
+        window.onload = () => {
+            cargarSelect("/ccpropiedad", "selectCC", "idCC", "nombreCC");
+
+            cargarSelect("/tipoAsociacion", "selectAsoCC",
+                "idTipoAsociacion", "nombreTipoAsociacion");
+
+            cargarSelect("/tipoAsociacion", "selectAsoPP",
+                "idTipoAsociacion", "nombreTipoAsociacion");
+        };
+
+
+        async function asignarCC() {
+            const body = {
+                numeroFinca: fincaCC.value,
+                idCC: parseInt(selectCC.value),
+                tipoAso: parseInt(selectAsoCC.value),
+                fechaRegistro: fechaCC.value
+            };
+
+            const res = await fetch("/asignarCCPropiedad", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body)
+            });
+
+            const data = await res.json();
+            alert("Resultado: " + JSON.stringify(data));
+        }
+
+
+   
+        async function asignarPropiedadPersona() {
+            const body = {
+                valorDocId: valorDoc.value,
+                numeroFinca: fincaPersona.value,
+                tipoAsoId: parseInt(selectAsoPP.value),
+                fechaRegistro: fechaPP.value
+            };
+
+            const res = await fetch("/asignar/propiedad-persona", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body)
+            });
+
+            const data = await res.json();
+            alert("Resultado: " + JSON.stringify(data));
+        }
+
+    </script>
+
+</body>
+</html>
