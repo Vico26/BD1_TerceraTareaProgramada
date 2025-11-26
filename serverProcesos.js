@@ -14,13 +14,14 @@ const { asignarPropiedadPersona } = require("./asignarPropiedadPersona");//PROBA
 const { obtenerFacturasPorFinca } = require('./obtenerFacturasPorFinca');//PROBADA Y SI SIRVE
 const { obtenerLecturasPorMedidor } = require('./obtenerLecturasPorMedidor');//PROBADA Y SI SIRVE
 const { obtenerPagosPorFinca } = require('./obtenerPagosPorFinca');//PROBADA Y SI SIRVE
-const { obtenerTodosLosPagos } = require('./obtenerPagos');//FALTA PROBAR
-const { obtenerTodasLasFacturas } = require('./obtenerFacturas');//FALTA PROBAR
-const { obtenerTodasLasLecturas } = require('./obtenerLecturas');//FALTA PROBAR
-const { obtenerTipoUsoPropiedad} = require('./obtenerTipoUso');//FALTA PROBAR
-const { obtenerTipoZonaPropiedad } = require('./obtenerTipoDeZona');//FALTA PROBAR
-const { obtenerTipoAsociacion } = require('./obtenerTipoAso');//FALTA PROBAR
-const { obtenerCCPropiedad } = require('./obtenerCCPropiedad');//FALTA PROBAR
+const { obtenerTodosLosPagos } = require('./obtenerPagos');//PROBADA Y SI SIRVE
+const { obtenerTodasLasFacturas } = require('./obtenerFacturas');//PROBADA Y SI SIRVE
+const { obtenerTodasLasLecturas } = require('./obtenerLecturas');//PROBADA Y SI SIRVE
+const { obtenerTipoUsoPropiedad} = require('./obtenerTipoUso');//PROBADA Y SI SIRVE
+const { obtenerTipoZonaPropiedad } = require('./obtenerTipoDeZona');//PROBADA Y SI SIRVE
+const { obtenerTipoAsociacion } = require('./obtenerTipoAso');//PROBADA Y SI SIRVE
+const { obtenerCCPropiedad } = require('./obtenerCCPropiedad');//PROBADA Y SI SIRVE 
+const { obtenerCCs } = require('./obtenerCCs');//FALTA PROBAR
 
 const { pagarFactura } = require('./pagarFactura');//POBRADA Y SI SIRVE
 
@@ -437,6 +438,16 @@ router.post('/procesos/operaciones-por-fecha', async (req, res) => {
         console.error('Error en /procesos/operaciones-por-fecha:', err);
         return res.status(500).json({ error: 'Error interno del servidor' });
     }
+});
+
+router.get('/ccs', async (req, res) => {
+  try {
+    const resultado = await obtenerCCs();
+    return manejarRespuestaSP(res, resultado);
+  } catch (err) {
+    console.error('Error en /ccs', err);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
 });
 
 module.exports = router;
