@@ -21,3 +21,4 @@ async function asignarCCPropiedad(numeroFinca, idCC, tipoAso, fechaRegistro) {
 
 module.exports = { asignarCCPropiedad };
 //asignarCCPropiedad("F-0012",5,1,"2025-11-24");
+obtenerCCPropiedad();

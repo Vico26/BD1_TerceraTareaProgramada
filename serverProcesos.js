@@ -408,7 +408,7 @@ router.get('/ccpropiedad', async (req, res) => {
 
 router.post('/procesos/operaciones-por-fecha', async (req, res) => {
     try {
-        const { pathXML } = req.body;   
+        const { pathXML } = req.body;   // ejemplo: "C:\\Users\\USUARIO\\...\\xmlUltimo.xml"
 
         if (!pathXML) {
             return res.status(400).json({ error: 'Falta pathXML' });

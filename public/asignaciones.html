@@ -1,4 +1,4 @@
-\<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -97,106 +97,55 @@
     <script>
         async function cargarSelect(url, idSelect, campoId, campoNombre) {
             try {
-                console.log("🔍 Cargando datos de:", url);
+                console.log("Cargando datos de:", url);
                 const res = await fetch(url);
-                const data = await res.json();
-
-                console.log("📦 Estructura completa de la respuesta:", data);
-                console.log("🔍 Propiedades de data:", Object.keys(data));
                 
-                if (data.recordset) {
-                    console.log("📊 Recordset encontrado:", data.recordset);
+                if (!res.ok) {
+                    throw new Error(`Error HTTP: ${res.status} ${res.statusText}`);
                 }
-                if (data.output) {
-                    console.log("📤 Output encontrado:", data.output);
-                }
-                if (data.returnValue !== undefined) {
-                    console.log("🔄 Return value:", data.returnValue);
-                }
+                
+                const data = await res.json();
+                console.log("Respuesta de", url, ":", data);
 
                 const select = document.getElementById(idSelect);
                 select.innerHTML = "";
 
-                // DEBUG: Intentar diferentes estructuras
-                let items = [];
-                
-                // Opción 1: data es directamente el array
-                if (Array.isArray(data)) {
-                    console.log("✅ Data es un array directo");
-                    items = data;
-                }
-                // Opción 2: data.recordset existe y es array
-                else if (data.recordset && Array.isArray(data.recordset)) {
-                    console.log("✅ Usando data.recordset");
-                    items = data.recordset;
-                }
-                // Opción 3: data.output existe y es array
-                else if (data.output && Array.isArray(data.output)) {
-                    console.log("✅ Usando data.output");
-                    items = data.output;
-                }
-                // Opción 4: data tiene una propiedad que es array
-                else {
-                    console.log("🔍 Buscando propiedad array en data...");
-                    for (let key in data) {
-                        if (Array.isArray(data[key])) {
-                            console.log("✅ Encontrado array en propiedad:", key);
-                            items = data[key];
-                            break;
-                        }
-                    }
-                }
+                // Para endpoints de /api/ usamos el array directamente
+                let items = data;
 
-                console.log("🎯 Items a cargar:", items);
+                console.log("Datos a cargar:", items);
 
-                if (items.length === 0) {
-                    console.warn("⚠️ No se encontraron items para cargar");
+                if (!items || items.length === 0) {
                     select.innerHTML = "<option>No hay datos disponibles</option>";
                     return;
-                }
-
-                // Verificar que los campos existen en el primer item
-                if (items[0]) {
-                    console.log("🔍 Campos disponibles en el primer item:", Object.keys(items[0]));
-                    console.log("🔍 Buscando campo ID:", campoId, " - Existe:", items[0].hasOwnProperty(campoId));
-                    console.log("🔍 Buscando campo Nombre:", campoNombre, " - Existe:", items[0].hasOwnProperty(campoNombre));
                 }
 
                 // Cargar las opciones
                 items.forEach(item => {
                     const op = document.createElement("option");
-                    
-                    // Verificar que los campos existen
-                    if (!item[campoId]) {
-                        console.warn("⚠️ Campo ID no encontrado:", campoId, "en item:", item);
-                    }
-                    if (!item[campoNombre]) {
-                        console.warn("⚠️ Campo Nombre no encontrado:", campoNombre, "en item:", item);
-                    }
-                    
                     op.value = item[campoId] || "";
                     op.textContent = item[campoNombre] || "Sin nombre";
                     select.appendChild(op);
                 });
 
-                console.log("✅ Select cargado exitosamente con", items.length, "items");
+                console.log("Select cargado exitosamente");
 
             } catch (err) {
-                console.error("❌ Error cargando", url, ":", err);
+                console.error("Error cargando", url, ":", err);
                 const select = document.getElementById(idSelect);
-                select.innerHTML = "<option>Error cargando datos</option>";
+                select.innerHTML = "<option>Error: " + err.message + "</option>";
             }
         }
 
         window.onload = () => {
-            console.log("🚀 Iniciando carga de datos...");
+            console.log("Iniciando carga de datos...");
             
-            // Cargar tipos de asociación (usando el endpoint que funciona)
+            // Usar SOLO los endpoints que sabemos que funcionan del segundo archivo
             cargarSelect("/api/tipoAsociacion", "selectAsoCC", "idTipoAso", "Nombre");
             cargarSelect("/api/tipoAsociacion", "selectAsoPP", "idTipoAso", "Nombre");
             
-            // Cargar centros de costo
-            cargarSelect("/ccpropiedad", "selectCC", "idCC", "nombreCC");
+            // Para CC, usar el endpoint que funcione - si /api/centrosCosto no existe, probar otros
+            cargarSelect("/api/centrosCosto", "selectCC", "idCC", "Nombre");
         };
 
         async function asignarCC() {
