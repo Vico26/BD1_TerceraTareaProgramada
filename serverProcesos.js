@@ -20,7 +20,6 @@ const { obtenerTodasLasLecturas } = require('./obtenerLecturas');//PROBADA Y SI 
 const { obtenerTipoUsoPropiedad} = require('./obtenerTipoUso');//PROBADA Y SI SIRVE
 const { obtenerTipoZonaPropiedad } = require('./obtenerTipoDeZona');//PROBADA Y SI SIRVE
 const { obtenerTipoAsociacion } = require('./obtenerTipoAso');//PROBADA Y SI SIRVE
-const { obtenerCCPropiedad } = require('./obtenerCCPropiedad');//PROBADA Y SI SIRVE 
 const { obtenerCCs } = require('./obtenerCCs');//FALTA PROBAR
 
 const { pagarFactura } = require('./pagarFactura');//POBRADA Y SI SIRVE
@@ -397,16 +396,6 @@ router.get('/tipoAsociacion', async (req, res) => {
     }
 });
 
-router.get('/ccpropiedad', async (req, res) => {
-    try {
-        const resultado = await obtenerCCPropiedad(); 
-        return manejarRespuestaSP(res, resultado);
-    } catch (err) {
-        console.error('Error en /ccpropiedad', err);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
-});
-
 router.post('/procesos/operaciones-por-fecha', async (req, res) => {
     try {
         const { pathXML } = req.body;   // ejemplo: "C:\\Users\\USUARIO\\...\\xmlUltimo.xml"
@@ -442,8 +431,11 @@ router.post('/procesos/operaciones-por-fecha', async (req, res) => {
 
 router.get('/ccs', async (req, res) => {
   try {
-    const resultado = await obtenerCCs();
-    return manejarRespuestaSP(res, resultado);
+    const r = await obtenerCCs(); // { recordset, returnValue } | { success:false, error }
+    if (r && r.success === false) {
+      return res.status(500).json({ error: 'DB error', detail: String(r.error?.message || r.error) });
+    }
+    return res.json(r.recordset || []); // <-- JSON plano (evita HTML/errores de contrato)
   } catch (err) {
     console.error('Error en /ccs', err);
     res.status(500).json({ error: 'Error interno del servidor' });

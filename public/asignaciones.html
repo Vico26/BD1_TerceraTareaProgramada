@@ -1,234 +1,182 @@
+<!-- /public/asignaciones.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Asignaciones</title>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #2d2fa3;
-            margin: 0;
-            padding: 20px;
-        }
-        .panel {
-            border: 1px solid #626bf1;
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
-            background: #f9f9f9;
-            width: 460px;
-        }
-        label {
-            display: block;
-            margin-top: 12px;
-        }
-        input, select {
-            width: 260px;
-            padding: 6px;
-            margin-top: 4px;
-        }
-        button {
-            margin-top: 15px;
-            padding: 8px 16px;
-            cursor: pointer;
-        }
-        h2 {
-            margin-top: 0;
-        }
-        h1 {
-            margin-top: 0;
-            color: white;
-        }
-        .msg {
-            margin-top: 10px;
-            font-weight: bold;
-        }
-        .success {
-            color: green;
-        }
-        .error {
-            color: red;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>Asignaciones</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #2d2fa3; margin: 0; padding: 20px; }
+    .panel { border: 1px solid #626bf1; border-radius: 10px; padding: 20px; margin-top: 20px; background: #f9f9f9; width: 460px; }
+    label { display: block; margin-top: 12px; }
+    input, select { width: 260px; padding: 6px; margin-top: 4px; }
+    button { margin-top: 15px; padding: 8px 16px; cursor: pointer; }
+    h2 { margin-top: 0; }
+    h1 { margin-top: 0; color: white; }
+    .msg { margin-top: 10px; font-weight: bold; }
+    .success { color: green; }
+    .error { color: red; }
+  </style>
 </head>
 <body>
+  <h1>Asignaciones</h1>
 
-    <h1>Asignaciones</h1>
+  <div class="panel">
+    <h2>Asignar CC a Propiedad</h2>
+    <label>Número de Finca:</label>
+    <input type="text" id="fincaCC" />
 
-    <div class="panel">
-        <h2>Asignar CC a Propiedad</h2>
+    <label>ID CC:</label>
+    <select id="selectCC"></select>
 
-        <label>Número de Finca:</label>
-        <input type="text" id="fincaCC">
+    <label>Tipo de Asociación:</label>
+    <select id="selectAsoCC"></select>
 
-        <label>ID CC:</label>
-        <select id="selectCC"></select>
+    <label>Fecha de Registro:</label>
+    <input type="date" id="fechaCC" />
 
-        <label>Tipo de Asociación:</label>
-        <select id="selectAsoCC"></select>
+    <button onclick="asignarCC()">Asignar CC</button>
+    <div id="msgCC" class="msg"></div>
+  </div>
 
-        <label>Fecha de Registro:</label>
-        <input type="date" id="fechaCC">
+  <div class="panel">
+    <h2>Asignación Propiedad – Persona</h2>
+    <label>Valor Documento Identidad:</label>
+    <input type="text" id="valorDoc" />
 
-        <button onclick="asignarCC()">Asignar CC</button>
-        <div id="msgCC" class="msg"></div>
-    </div>
+    <label>Número de Finca:</label>
+    <input type="text" id="fincaPersona" />
 
-    <div class="panel">
-        <h2>Asignación Propiedad – Persona</h2>
+    <label>Tipo de Asociación:</label>
+    <select id="selectAsoPP"></select>
 
-        <label>Valor Documento Identidad:</label>
-        <input type="text" id="valorDoc">
+    <label>Fecha de Registro:</label>
+    <input type="date" id="fechaPP" />
 
-        <label>Número de Finca:</label>
-        <input type="text" id="fincaPersona">
+    <button onclick="asignarPropiedadPersona()">Asignar Propiedad a Persona</button>
+    <div id="msgPropiedadPersona" class="msg"></div>
+  </div>
 
-        <label>Tipo de Asociación:</label>
-        <select id="selectAsoPP"></select>
+ <script>
+  const API_BASE = '/api';
 
-        <label>Fecha de Registro:</label>
-        <input type="date" id="fechaPP">
+  async function ensureJson(res) {
+    if (!res.ok) {
+      const t = await res.text().catch(() => '');
+      throw new Error(`HTTP ${res.status} ${res.statusText} – ${t.slice(0,120)}`);
+    }
+    const ct = res.headers.get('content-type') || '';
+    if (!ct.includes('application/json')) {
+      const t = await res.text().catch(() => '');
+      throw new Error(`Respuesta no-JSON (${ct}): ${t.slice(0,120)}`);
+    }
+    return res.json();
+  }
 
-        <button onclick="asignarPropiedadPersona()">Asignar Propiedad a Persona</button>
-        <div id="msgPropiedadPersona" class="msg"></div>
-    </div>
+  async function cargarSelect(url, idSelect, campoId, campoNombre) {
+    try {
+      const res = await fetch(url);
+      const items = await ensureJson(res);
+      const sel = document.getElementById(idSelect);
+      sel.innerHTML = "";
+      if (!Array.isArray(items) || items.length === 0) {
+        sel.innerHTML = "<option>No hay datos disponibles</option>";
+        return;
+      }
+      items.forEach(it => {
+        const op = document.createElement("option");
+        op.value = it[campoId] ?? "";
+        op.textContent = it[campoNombre] ?? "Sin nombre";
+        sel.appendChild(op);
+      });
+    } catch (err) {
+      console.error("Error cargando", url, ":", err);
+      const sel = document.getElementById(idSelect);
+      sel.innerHTML = "<option>Error: " + err.message + "</option>";
+    }
+  }
 
-    <script>
-        async function cargarSelect(url, idSelect, campoId, campoNombre) {
-            try {
-                console.log("Cargando datos de:", url);
-                const res = await fetch(url);
-                
-                if (!res.ok) {
-                    throw new Error(`Error HTTP: ${res.status} ${res.statusText}`);
-                }
-                
-                const data = await res.json();
-                console.log("Respuesta de", url, ":", data);
+  window.onload = () => {
+    cargarSelect(`${API_BASE}/tipoAsociacion`, "selectAsoCC", "idTipoAso", "Nombre");
+    cargarSelect(`${API_BASE}/tipoAsociacion`, "selectAsoPP", "idTipoAso", "Nombre");
+    cargarSelect(`${API_BASE}/ccs`, "selectCC", "idCC", "nombre");
+  };
 
-                const select = document.getElementById(idSelect);
-                select.innerHTML = "";
+  async function asignarCC() {
+    const msg = document.getElementById("msgCC");
+    msg.textContent = "Procesando...";
+    msg.className = "msg";
 
-                // Para endpoints de /api/ usamos el array directamente
-                let items = data;
+    try {
+      const numeroFinca = (document.getElementById("fincaCC").value || "").trim();
+      const idCC = parseInt(document.getElementById("selectCC").value, 10);
+      const tipoAso = parseInt(document.getElementById("selectAsoCC").value, 10);
+      const fechaRegistro = (document.getElementById("fechaCC").value || "").trim();
 
-                console.log("Datos a cargar:", items);
+      // Validación front para evitar undefined/null:
+      if (!numeroFinca) throw new Error("numeroFinca requerido");
+      if (!Number.isInteger(idCC)) throw new Error("idCC inválido");
+      if (!Number.isInteger(tipoAso)) throw new Error("tipoAso inválido");
 
-                if (!items || items.length === 0) {
-                    select.innerHTML = "<option>No hay datos disponibles</option>";
-                    return;
-                }
+      const res = await fetch(`${API_BASE}/asignarCCPropiedad`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ numeroFinca, idCC, tipoAso, fechaRegistro })
+      });
 
-                // Cargar las opciones
-                items.forEach(item => {
-                    const op = document.createElement("option");
-                    op.value = item[campoId] || "";
-                    op.textContent = item[campoNombre] || "Sin nombre";
-                    select.appendChild(op);
-                });
+      const data = await ensureJson(res);
+      if (data.success) {
+        msg.textContent = "CC asignado correctamente";
+        msg.className = "msg success";
+        document.getElementById("fincaCC").value = "";
+        document.getElementById("fechaCC").value = "";
+      } else {
+        msg.textContent = "Error: " + (data.message || JSON.stringify(data));
+        msg.className = "msg error";
+      }
+    } catch (err) {
+      console.error("Error asignando CC:", err);
+      msg.textContent = "Error: " + err.message;
+      msg.className = "msg error";
+    }
+  }
 
-                console.log("Select cargado exitosamente");
+  async function asignarPropiedadPersona() {
+    const msg = document.getElementById("msgPropiedadPersona");
+    msg.textContent = "Procesando...";
+    msg.className = "msg";
 
-            } catch (err) {
-                console.error("Error cargando", url, ":", err);
-                const select = document.getElementById(idSelect);
-                select.innerHTML = "<option>Error: " + err.message + "</option>";
-            }
-        }
+    try {
+      const valorDocId = (document.getElementById("valorDoc").value || "").trim();
+      const numeroFinca = (document.getElementById("fincaPersona").value || "").trim();
+      const tipoAsoId = parseInt(document.getElementById("selectAsoPP").value, 10);
+      const fechaRegistro = (document.getElementById("fechaPP").value || "").trim();
 
-        window.onload = () => {
-            console.log("Iniciando carga de datos...");
-            
-            // Usar SOLO los endpoints que sabemos que funcionan del segundo archivo
-            cargarSelect("/api/tipoAsociacion", "selectAsoCC", "idTipoAso", "Nombre");
-            cargarSelect("/api/tipoAsociacion", "selectAsoPP", "idTipoAso", "Nombre");
-            
-            // Para CC, usar el endpoint que funcione - si /api/centrosCosto no existe, probar otros
-            cargarSelect("/api/centrosCosto", "selectCC", "idCC", "Nombre");
-        };
+      if (!valorDocId || !numeroFinca) throw new Error("Datos requeridos faltantes");
+      if (!Number.isInteger(tipoAsoId)) throw new Error("tipoAsoId inválido");
 
-        async function asignarCC() {
-            const msg = document.getElementById("msgCC");
-            msg.innerHTML = "Procesando...";
-            msg.className = "msg";
+      const res = await fetch(`${API_BASE}/asignar/propiedad-persona`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ valorDocId, numeroFinca, tipoAsoId, fechaRegistro })
+      });
 
-            try {
-                const body = {
-                    numeroFinca: document.getElementById("fincaCC").value,
-                    idCC: parseInt(document.getElementById("selectCC").value),
-                    tipoAso: parseInt(document.getElementById("selectAsoCC").value),
-                    fechaRegistro: document.getElementById("fechaCC").value
-                };
-
-                console.log("Enviando CC:", body);
-
-                const res = await fetch("/asignarCCPropiedad", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(body)
-                });
-
-                const data = await res.json();
-                console.log("Respuesta CC:", data);
-
-                if (data.success) {
-                    msg.innerHTML = "CC asignado correctamente";
-                    msg.className = "msg success";
-                    document.getElementById("fincaCC").value = "";
-                    document.getElementById("fechaCC").value = "";
-                } else {
-                    msg.innerHTML = "Error: " + (data.message || JSON.stringify(data));
-                    msg.className = "msg error";
-                }
-            } catch (err) {
-                console.error("Error asignando CC:", err);
-                msg.innerHTML = "Error de conexión: " + err.message;
-                msg.className = "msg error";
-            }
-        }
-
-        async function asignarPropiedadPersona() {
-            const msg = document.getElementById("msgPropiedadPersona");
-            msg.innerHTML = "Procesando...";
-            msg.className = "msg";
-
-            try {
-                const body = {
-                    valorDocId: document.getElementById("valorDoc").value,
-                    numeroFinca: document.getElementById("fincaPersona").value,
-                    tipoAsoId: parseInt(document.getElementById("selectAsoPP").value),
-                    fechaRegistro: document.getElementById("fechaPP").value
-                };
-
-                console.log("Enviando propiedad-persona:", body);
-
-                const res = await fetch("/asignar/propiedad-persona", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(body)
-                });
-
-                const data = await res.json();
-                console.log("Respuesta propiedad-persona:", data);
-
-                if (data.success) {
-                    msg.innerHTML = "Asignación realizada correctamente";
-                    msg.className = "msg success";
-                    document.getElementById("valorDoc").value = "";
-                    document.getElementById("fincaPersona").value = "";
-                    document.getElementById("fechaPP").value = "";
-                } else {
-                    msg.innerHTML = "Error: " + (data.message || JSON.stringify(data));
-                    msg.className = "msg error";
-                }
-            } catch (err) {
-                console.error("Error asignando propiedad-persona:", err);
-                msg.innerHTML = "Error de conexión: " + err.message;
-                msg.className = "msg error";
-            }
-        }
-    </script>
-
+      const data = await ensureJson(res);
+      if (data.success) {
+        msg.textContent = "Asignación realizada correctamente";
+        msg.className = "msg success";
+        document.getElementById("valorDoc").value = "";
+        document.getElementById("fincaPersona").value = "";
+        document.getElementById("fechaPP").value = "";
+      } else {
+        msg.textContent = "Error: " + (data.message || JSON.stringify(data));
+        msg.className = "msg error";
+      }
+    } catch (err) {
+      console.error("Error asignando propiedad-persona:", err);
+      msg.textContent = "Error: " + err.message;
+      msg.className = "msg error";
+    }
+  }
+</script>
 </body>
 </html>
