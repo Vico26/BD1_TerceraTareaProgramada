@@ -39,7 +39,7 @@
       <h3>Registrar Pago</h3>
       <div class="row">
         <input type="text" id="idFactura" placeholder="ID de la Factura">
-        <input type="text" id="tipoMedioPago" placeholder="Medio de Pago">
+        <input type="text" id="tipoMedioPago" placeholder="Medio de Pago (ID)">
         <input type="text" id="numeroRef" placeholder="Número de Referencia">
         <input type="date" id="fechaPago">
       </div>
@@ -81,21 +81,14 @@
         headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
         ...options
       });
-
       const raw = await resp.text().catch(() => '');
-      let data;
-      try { data = raw ? JSON.parse(raw) : null; } catch { data = null; }
+      let data; try { data = raw ? JSON.parse(raw) : null; } catch { data = null; }
 
       if (!resp.ok) {
-        const msg =
-          (data && (data.error || data.CodigoError || data.message)) ||
-          (raw ? `HTTP ${resp.status} ${resp.statusText} – ${raw}` : `HTTP ${resp.status} ${resp.statusText}`);
-        const err = new Error(String(msg));
-        err.status = resp.status;
-        err.body = raw;
-        throw err;
+        const msg = (data && (data.error || data.CodigoError || data.message))
+          || (raw ? `HTTP ${resp.status} ${resp.statusText} – ${raw}` : `HTTP ${resp.status} ${resp.statusText}`);
+        const err = new Error(String(msg)); err.status = resp.status; err.body = raw; throw err;
       }
-
       if (data && Array.isArray(data.recordset)) return data.recordset;
       if (Array.isArray(data)) return data;
       return data;
@@ -103,33 +96,22 @@
 
     function setLoading(el, msg='Cargando...') { el.innerHTML = `<p class="msg info">${msg}</p>`; }
     function setError(el, msg='Error desconocido') { el.innerHTML = `<p class="msg error">${msg}</p>`; }
+    const escapeHtml = v => String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;");
+    function fmtDate(value){ if(!value) return ''; const d=value instanceof Date?value:new Date(value); if(Number.isNaN(d.getTime())) return String(value); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+    const normalizeKey = k => String(k||'').toLowerCase().replace(/[\s_\-]/g,'');
 
-    function escapeHtml(v) {
-      return String(v ?? '')
-        .replaceAll('&','&amp;').replaceAll('<','&lt;')
-        .replaceAll('>','&gt;').replaceAll('"','&quot;')
-        .replaceAll("'","&#039;");
-    }
-
-    function fmtDate(value) {
-      if (!value) return '';
-      const d = (value instanceof Date) ? value : new Date(value);
-      if (Number.isNaN(d.getTime())) return String(value);
-      const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
-      return `${y}-${m}-${day}`;
-    }
-
-    function getByHints(obj, exactHints = [], predicate = null) {
-      for (const k of exactHints) if (k in obj) return obj[k];
+    function getByHints(obj, variants = [], predicate = null) {
+      if (!obj || typeof obj !== 'object') return '';
+      // exact
+      for (const v of variants) if (v in obj) return obj[v];
       const keys = Object.keys(obj);
-      for (const k of exactHints) {
-        const hit = keys.find(kk => kk.toLowerCase() === String(k).toLowerCase());
-        if (hit) return obj[hit];
-      }
-      if (typeof predicate === 'function') {
-        const hit = keys.find(kk => predicate(kk.toLowerCase()));
-        if (hit) return obj[hit];
-      }
+      // case-insensitive
+      for (const v of variants) { const hit = keys.find(k => k.toLowerCase() === String(v).toLowerCase()); if (hit) return obj[hit]; }
+      // normalized
+      const normMap = new Map(keys.map(k => [normalizeKey(k), k]));
+      for (const v of variants) { const nk = normalizeKey(v); if (normMap.has(nk)) return obj[normMap.get(nk)]; }
+      // predicate (normalized)
+      if (typeof predicate === 'function') { const hit = keys.find(k => predicate(normalizeKey(k))); if (hit) return obj[hit]; }
       return '';
     }
 
@@ -140,35 +122,53 @@
       }
       const header = `
         <tr>
-          <th>ID Factura</th>
+          <th>ID Factura / Pago</th>
           <th>Medio de Pago</th>
           <th>Referencia</th>
           <th>Fecha Pago</th>
         </tr>`;
+
       const body = rows.map(p => {
-        const idFacturaRaw = getByHints(p,
-          ['idFactura','facturaId','IdFactura','IDFactura','ID_Factura','id_factura'],
-          k => k.includes('id') && k.includes('factura')
+        // idFactura (muchas variantes)
+        const idFacturaRaw = getByHints(
+          p,
+          ['idFactura','IdFactura','IDFactura','ID_Factura','id_factura','facturaId','FacturaId','FacturaID','Factura_ID','idfactura','factura_id'],
+          nk => nk.startsWith('id') && nk.includes('fact')
         );
+        // fallback: idPago si no hay idFactura
+        const idPagoRaw = getByHints(
+          p,
+          ['idPago','IdPago','IDPago','id_pago','pagoId','PagoId','pago_id'],
+          nk => nk.startsWith('id') && nk.includes('pago')
+        );
+
+        let idDisplay = idFacturaRaw !== '' ? idFacturaRaw : (idPagoRaw !== '' ? `#P${idPagoRaw}` : '');
+        if (idDisplay === '') {
+          console.warn('[renderTable] Sin idFactura ni idPago. Keys:', Object.keys(p));
+          idDisplay = '—'; // evita celda vacía
+        }
+
         const medioRaw = getByHints(p,
-          ['tipoMedioPago','medioPago','TipoMedioPago','tipo_medio_pago'],
-          k => k.includes('medio') || k.includes('pago')
+          ['tipoMedioPago','TipoMedioPago','tipo_medio_pago','medioPago','MedioPago'],
+          nk => nk.includes('medio') && nk.includes('pago')
         );
         const refRaw = getByHints(p,
-          ['numeroRef','referencia','NumeroRef','numero_ref'], k => k.includes('ref')
+          ['numeroRef','NumeroRef','numero_ref','referencia','Referencia'],
+          nk => nk.includes('ref') || nk.endsWith('referencia')
         );
         const fechaRaw = getByHints(p,
-          ['fechaPago','FechaPago','fecha','createdAt','FECHA_PAGO','fecha_pago'],
-          k => k.includes('fecha')
+          ['fechaPago','FechaPago','fecha_pago','fecha','Fecha','createdAt'],
+          nk => nk.includes('fecha')
         );
 
         return `<tr>
-          <td>${escapeHtml(idFacturaRaw)}</td>
+          <td>${escapeHtml(idDisplay)}</td>
           <td>${escapeHtml(medioRaw)}</td>
           <td>${escapeHtml(refRaw)}</td>
           <td>${escapeHtml(fmtDate(fechaRaw))}</td>
         </tr>`;
       }).join('');
+
       container.innerHTML = `<table>${header}${body}</table>`;
     }
 
@@ -180,18 +180,20 @@
       const btn = document.getElementById('btnPagar');
       const msg = document.getElementById('pagarMsg');
 
-      const idFactura = idFacturaEl.value.trim();
-      const tipoMedioPago = tipoMedioPagoEl.value.trim();
+      const idFactura = parseInt(idFacturaEl.value.trim(), 10);
+      const tipoMedioPago = parseInt(tipoMedioPagoEl.value.trim(), 10);
       const numeroRef = numeroRefEl.value.trim();
-      const fechaPago = fechaPagoEl.value; // ← enviar tal cual lo da el input
+      const fechaPago = fechaPagoEl.value;
 
       msg.style.display = 'block';
       msg.className = 'msg info';
       msg.textContent = '';
 
-      if (!idFactura || !tipoMedioPago || !numeroRef || !fechaPago) {
+      if (!Number.isInteger(idFactura) || idFactura <= 0 ||
+          !Number.isInteger(tipoMedioPago) || tipoMedioPago <= 0 ||
+          !numeroRef || !fechaPago) {
         msg.className = 'msg error';
-        msg.textContent = 'Todos los campos son obligatorios.';
+        msg.textContent = 'Completa todos los campos. idFactura y Medio de Pago deben ser enteros > 0.';
         return;
       }
 
@@ -200,33 +202,23 @@
         msg.textContent = 'Registrando pago...';
 
         const payload = { idFactura, tipoMedioPago, numeroRef, fechaPago };
-        console.debug('[pagarFactura] payload', payload); // debug
-
         const data = await apiFetch('/pagarFactura', {
           method: 'POST',
           body: JSON.stringify(payload)
         });
 
-        if (data && data.success === false) {
-          throw new Error(data.CodigoError || data.error || 'Operación fallida');
-        }
+        if (data && data.success === false) throw new Error(data.CodigoError || data.error || 'Operación fallida');
 
         msg.className = 'msg info';
         msg.textContent = (data && (data.message || data.mensaje)) || 'Pago registrado correctamente.';
 
-        idFacturaEl.value = '';
-        tipoMedioPagoEl.value = '';
-        numeroRefEl.value = '';
-        fechaPagoEl.value = '';
-
+        idFacturaEl.value = ''; tipoMedioPagoEl.value = ''; numeroRefEl.value = ''; fechaPagoEl.value = '';
         await mostrarPagos();
       } catch (err) {
         msg.className = 'msg error';
         msg.textContent = `Error: ${err.message}`;
         console.error('[pagarFactura] error', { status: err.status, body: err.body, message: err.message });
-      } finally {
-        btn.disabled = false;
-      }
+      } finally { btn.disabled = false; }
     }
 
     async function mostrarPagos() {
@@ -239,9 +231,7 @@
         renderTable(panel, rows);
       } catch (err) {
         setError(panel, `No se pudieron cargar los pagos: ${err.message}`);
-      } finally {
-        btn.disabled = false;
-      }
+      } finally { btn.disabled = false; }
     }
 
     async function mostrarPagosPorFinca() {
@@ -250,10 +240,7 @@
       const panel = document.getElementById('pagosFincaPanel');
       const btn = document.getElementById('btnBuscarFinca');
 
-      if (!numeroFinca) {
-        setError(panel, 'Ingresa un número de finca.');
-        return;
-      }
+      if (!numeroFinca) { setError(panel, 'Ingresa un número de finca.'); return; }
 
       try {
         btn.disabled = true;
@@ -262,9 +249,7 @@
         renderTable(panel, rows);
       } catch (err) {
         setError(panel, `No se pudieron cargar los pagos de la finca: ${err.message}`);
-      } finally {
-        btn.disabled = false;
-      }
+      } finally { btn.disabled = false; }
     }
 
     document.getElementById('btnPagar').addEventListener('click', pagarFactura);
@@ -280,4 +265,6 @@
   </script>
 </body>
 </html>
+
+
 

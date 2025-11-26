@@ -4,123 +4,77 @@
 <meta charset="UTF-8">
 <title>Lecturas de Medidores</title>
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        background: #2d2fa3;
-        padding: 20px;
-    }
-    h1 {
-        text-align: center;
-        margin-bottom: 30px;
-        color: #ffffff;
-    }
-    .panel {
-        background: white;
-        padding: 20px;
-        margin-bottom: 25px;
-        border-radius: 10px;
-        box-shadow: 0 0 8px rgba(0,0,0,0.1);
-    }
-    .panel h2 {
-        margin-top: 0;
-    }
-    label {
-        font-weight: bold;
-    }
-    input[type="text"] {
-        padding: 8px;
-        width: 250px;
-        border-radius: 5px;
-        border: 1px solid #aaa;
-    }
-    button {
-        padding: 10px 15px;
-        margin-top: 10px;
-        border: none;
-        border-radius: 6px;
-        background-color: #007bff;
-        color: white;
-        font-size: 15px;
-        cursor: pointer;
-    }
-    button:hover {
-        background-color: #0056b3;
-    }
-    .msg {
-        margin-top: 10px;
-        padding: 10px;
-        border-radius: 6px;
-        font-weight: bold;
-    }
+    body { font-family: Arial, sans-serif; background: #2d2fa3; padding: 20px; }
+    h1 { text-align: center; margin-bottom: 30px; color: #ffffff; }
+    .panel { background: white; padding: 20px; margin-bottom: 25px; border-radius: 10px; box-shadow: 0 0 8px rgba(0,0,0,0.1); }
+    .panel h2 { margin-top: 0; }
+    label { font-weight: bold; display:block; margin-top:10px; }
+    input[type="text"], input[type="number"], input[type="date"] { padding: 8px; width: 260px; border-radius: 5px; border: 1px solid #aaa; }
+    button { padding: 10px 15px; margin-top: 12px; border: none; border-radius: 6px; background-color: #007bff; color: white; font-size: 15px; cursor: pointer; }
+    button:hover { background-color: #0056b3; }
+    .msg { margin-top: 10px; padding: 10px; border-radius: 6px; font-weight: bold; }
     .success { background-color: #d4ffd4; color: #006600; }
     .error { background-color: #ffd4d4; color: #990000; }
-
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 15px;
-    }
-    th, td {
-        padding: 10px;
-        border: 1px solid #ccc;
-    }
-    th {
-        background: #e6e6e6;
-    }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { padding: 10px; border: 1px solid #ccc; }
+    th { background: #e6e6e6; }
 </style>
 </head>
 <body>
 
 <h1>Lecturas de Medidores</h1>
 
-<!-- ====================================== -->
 <!-- LECTURAS POR MEDIDOR -->
-<!-- ====================================== -->
 <div class="panel">
     <h2>Lecturas por Medidor</h2>
-    <label>Número de Medidor:</label>
+    <label for="numeroMedidor">Número de Medidor:</label>
     <input type="text" id="numeroMedidor" placeholder="Ingrese el número de medidor">
     <br>
     <button onclick="lecturasPorMedidor()">Consultar</button>
-
-    <div id="msgMedidor"></div>
+    <div id="msgMedidor" class="msg"></div>
     <div id="tablaMedidor"></div>
 </div>
 
-<!-- ====================================== -->
 <!-- OBTENER TODAS LAS LECTURAS -->
-<!-- ====================================== -->
 <div class="panel">
     <h2>Obtener todas las lecturas</h2>
     <button onclick="todasLasLecturas()">Obtener lecturas</button>
-
-    <div id="msgTodas"></div>
+    <div id="msgTodas" class="msg"></div>
     <div id="tablaTodas"></div>
 </div>
 
+<!-- REGISTRAR LECTURA (NUEVO) -->
+<div class="panel">
+    <h2>Registrar Lectura</h2>
+    <label for="rl_medidor">Número de Medidor</label>
+    <input type="text" id="rl_medidor" placeholder="Ej: M-1028">
+
+    <label for="rl_tipoMov">Tipo de Movimiento (entero)</label>
+    <input type="number" id="rl_tipoMov" placeholder="Ej: 1">
+
+    <label for="rl_valor">Valor (decimal)</label>
+    <input type="number" id="rl_valor" step="0.01" placeholder="Ej: 199.50">
+
+    <label for="rl_fecha">Fecha de Lectura</label>
+    <input type="date" id="rl_fecha">
+
+    <button onclick="registrarLecturaNueva()">Registrar lectura</button>
+    <div id="msgRegistrar" class="msg"></div>
+</div>
+
 <script>
+const API = '/api';
+
 function generarTabla(recordset) {
-    if (!recordset || recordset.length === 0) {
-        return "<p>No hay datos disponibles.</p>";
-    }
-
+    if (!recordset || recordset.length === 0) return "<p>No hay datos disponibles.</p>";
     let html = "<table><tr>";
-
-    // Encabezados
-    for (let col in recordset[0]) {
-        html += `<th>${col}</th>`;
-    }
+    for (let col in recordset[0]) html += `<th>${col}</th>`;
     html += "</tr>";
-
-    // Filas
     recordset.forEach(row => {
         html += "<tr>";
-        for (let col in row) {
-            html += `<td>${row[col]}</td>`;
-        }
+        for (let col in row) html += `<td>${row[col]}</td>`;
         html += "</tr>";
     });
-
     html += "</table>";
     return html;
 }
@@ -129,30 +83,26 @@ async function lecturasPorMedidor() {
     const numero = document.getElementById("numeroMedidor").value.trim();
     const msg = document.getElementById("msgMedidor");
     const tabla = document.getElementById("tablaMedidor");
-
-    msg.innerHTML = "";
-    tabla.innerHTML = "";
+    msg.textContent = ""; msg.className = "msg"; tabla.innerHTML = "";
 
     if (!numero) {
-        msg.innerHTML = "Debes ingresar un número de medidor.";
-        msg.className = "msg error";
-        return;
+        msg.textContent = "Debes ingresar un número de medidor.";
+        msg.className = "msg error"; return;
     }
 
     try {
-        const response = await fetch(`/lecturas/${numero}`);
+        const response = await fetch(`${API}/lecturas/${encodeURIComponent(numero)}`);
         const data = await response.json();
-
-        if (response.ok && data.success) {
-            msg.innerHTML = "Lecturas obtenidas correctamente.";
+        if (response.ok) {
+            msg.textContent = "Lecturas obtenidas correctamente.";
             msg.className = "msg success";
-            tabla.innerHTML = generarTabla(data.recordset);
+            tabla.innerHTML = generarTabla(Array.isArray(data) ? data : data.recordset || data);
         } else {
-            msg.innerHTML = "Error: " + (data.error || data.CodigoError);
+            msg.textContent = "Error: " + (data.error || data.CodigoError || "desconocido");
             msg.className = "msg error";
         }
     } catch (err) {
-        msg.innerHTML = "Error al comunicarse con el servidor.";
+        msg.textContent = "Error al comunicarse con el servidor.";
         msg.className = "msg error";
     }
 }
@@ -160,24 +110,72 @@ async function lecturasPorMedidor() {
 async function todasLasLecturas() {
     const msg = document.getElementById("msgTodas");
     const tabla = document.getElementById("tablaTodas");
-
-    msg.innerHTML = "";
-    tabla.innerHTML = "";
+    msg.textContent = ""; msg.className = "msg"; tabla.innerHTML = "";
 
     try {
-        const response = await fetch(`/lecturas`);
+        const response = await fetch(`${API}/lecturas`);
         const data = await response.json();
-
-        if (response.ok && data.success) {
-            msg.innerHTML = "Todas las lecturas fueron obtenidas.";
+        if (response.ok) {
+            msg.textContent = "Todas las lecturas fueron obtenidas.";
             msg.className = "msg success";
-            tabla.innerHTML = generarTabla(data.recordset);
+            tabla.innerHTML = generarTabla(Array.isArray(data) ? data : data.recordset || data);
         } else {
-            msg.innerHTML = "Error: " + (data.error || data.CodigoError);
+            msg.textContent = "Error: " + (data.error || data.CodigoError || "desconocido");
             msg.className = "msg error";
         }
     } catch (err) {
-        msg.innerHTML = "Error al comunicarse con el servidor.";
+        msg.textContent = "Error al comunicarse con el servidor.";
+        msg.className = "msg error";
+    }
+}
+
+async function registrarLecturaNueva() {
+    const medidorEl = document.getElementById('rl_medidor');
+    const tipoMovEl = document.getElementById('rl_tipoMov');
+    const valorEl = document.getElementById('rl_valor');
+    const fechaEl = document.getElementById('rl_fecha');
+    const msg = document.getElementById('msgRegistrar');
+
+    const numeroMedidor = medidorEl.value.trim();
+    const tipoMov = Number.parseInt(tipoMovEl.value, 10);
+    const valor = Number.parseFloat(valorEl.value);
+    const fechaLectura = fechaEl.value;
+
+    msg.textContent = ""; msg.className = "msg";
+
+    // Validación rápida
+    if (!numeroMedidor || !Number.isInteger(tipoMov) || Number.isNaN(valor) || !fechaLectura) {
+        msg.textContent = "Completa todos los campos (tipoMov entero, valor numérico).";
+        msg.className = "msg error";
+        return;
+    }
+
+    try {
+        msg.textContent = "Registrando...";
+        msg.className = "msg";
+
+        const response = await fetch(`${API}/registrarLectura`, {
+            method: 'POST',
+            headers: { 'Content-Type':'application/json' },
+            body: JSON.stringify({ numeroMedidor, tipoMov, valor, fechaLectura })
+        });
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            msg.textContent = data.message || "Lectura registrada exitosamente.";
+            msg.className = "msg success";
+            // limpiar
+            tipoMovEl.value = "";
+            valorEl.value = "";
+            fechaEl.value = "";
+            // refrescar “todas”
+            try { await todasLasLecturas(); } catch {}
+        } else {
+            msg.textContent = "Error: " + (data.error || data.CodigoError || "desconocido");
+            msg.className = "msg error";
+        }
+    } catch (err) {
+        msg.textContent = "Error al comunicarse con el servidor.";
         msg.className = "msg error";
     }
 }
