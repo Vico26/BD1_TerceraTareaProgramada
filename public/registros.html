@@ -274,13 +274,11 @@ async function registrarPropiedad() {
             areaM2: parseInt(document.getElementById("pr_area").value) || 0,
             tipoUso: parseInt(document.getElementById("pr_tipoUso").value) || 0,
             tipoZona: parseInt(document.getElementById("pr_tipoZona").value) || 0,
-            tipoAso: 1,
             valorFiscal: parseFloat(document.getElementById("pr_valorFiscal").value) || 0,
             fechaRegistro: document.getElementById("pr_fecha").value
         };
 
         console.log("ENVIANDO propiedad:", payload);
-        console.log("tipoAso en payload:", payload.tipoAso);
 
         const res = await fetch("/api/registrarPropiedad", {
             method: "POST",
