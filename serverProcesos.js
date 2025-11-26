@@ -124,62 +124,41 @@ router.get('/buscarPropiedades', async (req, res) => {
 });
 
 
-router.post('/pagarFactura/masvieja', async (req, res) => {
+// PATCH: serverProcesos.js (solo este handler)
+router.post('/pagarFactura', async (req, res) => {
   try {
-    let { numeroFinca, idFactura, tipoMedioPago, numeroRef, fechaPago } = req.body;
+    let { idFactura, tipoMedioPago, numeroRef, fechaPago } = req.body;
 
+    const idFacturaInt = Number(idFactura);
     const tipoMedioPagoInt = Number(tipoMedioPago);
-    if (!numeroFinca && (!idFactura || !Number.isInteger(Number(idFactura)))) {
-      return res.status(400).json({ success: false, error: 'Proporcione numeroFinca o idFactura válido' });
-    }
-    if (!Number.isInteger(tipoMedioPagoInt) || !numeroRef || !fechaPago) {
-      return res.status(400).json({ success: false, error: 'Faltan datos para el pago' });
-    }
 
-    const pool = await sql.connect(config);
-
-    // Si vino idFactura, obtener numeroFinca de esa factura (y validar existencia)
-    if (!numeroFinca) {
-      const r1 = await pool.request()
-        .input('id', sql.Int, Number(idFactura))
-        .query(`SELECT TOP 1 numeroFinca FROM dbo.Factura WHERE idFactura = @id`);
-      if (!r1.recordset?.length) {
-        return res.status(404).json({ success: false, error: 'Factura no encontrada' });
-      }
-      numeroFinca = r1.recordset[0].numeroFinca;
+    if (!Number.isInteger(idFacturaInt) || idFacturaInt <= 0 ||
+        !Number.isInteger(tipoMedioPagoInt) || tipoMedioPagoInt <= 0 ||
+        !numeroRef || !fechaPago) {
+      return res.status(400).json({ success: false, error: 'Faltan datos o tipos inválidos' });
     }
 
-    // Buscar la más vieja pendiente de esa finca
-    const r2 = await pool.request()
-      .input('finca', sql.NVarChar(128), numeroFinca)
-      .query(`
-        SELECT TOP 1 idFactura
-        FROM dbo.Factura
-        WHERE numeroFinca = @finca AND estado = 1     -- 1 = pendiente
-        ORDER BY fechaFactura ASC, idFactura ASC
-      `);
+    // OJO: la función pagarFactura tiene firma (idFactura, tipoMedioPago, numeroRef, fechaPago)
+    const resultado = await pagarFactura(idFacturaInt, tipoMedioPagoInt, numeroRef, fechaPago);
 
-    if (!r2.recordset?.length) {
-      return res.status(400).json({ success: false, error: 'No hay facturas pendientes para esa finca' });
-    }
-
-    const idMasVieja = r2.recordset[0].idFactura;
-
-    // Ejecutar el SP sobre la más vieja
-    const resultado = await pagarFactura(idMasVieja, tipoMedioPagoInt, numeroRef, fechaPago);
+    // Si el SP devolvió error de negocio
     if (typeof resultado?.returnValue === 'number' && resultado.returnValue !== 0) {
+      // -> Pasar diagnóstico cuando sea 50004
+      if (resultado.returnValue === 50004) {
+        return res.status(400).json({
+          success: false,
+          CodigoError: 50004,
+          diagnostico: resultado.recordset?.[0] || null
+        });
+      }
+      // Otros códigos: devuélvelos tal cual
       return res.status(400).json({ success: false, CodigoError: resultado.returnValue });
     }
 
     const info = resultado?.recordset?.[0] || {};
-    return res.json({
-      success: true,
-      message: info.mensaje || 'Pago registrado',
-      pagada: idMasVieja,
-      finca: numeroFinca
-    });
+    return res.json({ success: true, message: info.mensaje || 'Pago registrado' });
   } catch (err) {
-    console.error('POST /pagarFactura/masvieja error:', err);
+    console.error('POST /pagarFactura error:', err);
     return res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });

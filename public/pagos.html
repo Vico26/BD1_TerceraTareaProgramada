@@ -74,278 +74,210 @@
   </div>
 
   <script>
-  const API_BASE = '/api';
+    const API_BASE = '/api';
 
-  async function apiFetch(path, options = {}) {
-    const resp = await fetch(`${API_BASE}${path}`, {
-      headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-      ...options
-    });
-
-    const raw = await resp.text().catch(() => '');
-    let data;
-    try { data = raw ? JSON.parse(raw) : null; } catch { data = null; }
-
-    if (!resp.ok) {
-      const msg =
-        (data && (data.error || data.CodigoError || data.message)) ||
-        (raw ? `HTTP ${resp.status} ${resp.statusText} – ${raw}` : `HTTP ${resp.status} ${resp.statusText}`);
-      const err = new Error(String(msg));
-      err.status = resp.status;
-      err.body = raw;
-      err.json = data;
-      throw err;
-    }
-
-    if (data && Array.isArray(data.recordset)) return data.recordset;
-    if (Array.isArray(data)) return data;
-    return data;
-  }
-
-  function setLoading(el, msg='Cargando...') { el.innerHTML = `<p class="msg info">${msg}</p>`; }
-  function setError(el, msg='Error desconocido') { el.innerHTML = `<p class="msg error">${msg}</p>`; }
-
-  function escapeHtml(v) {
-    return String(v ?? '')
-      .replaceAll('&','&amp;').replaceAll('<','&lt;')
-      .replaceAll('>','&gt;').replaceAll('"','&quot;')
-      .replaceAll("'","&#039;");
-  }
-
-  function fmtDate(value) {
-    if (!value) return '';
-    const d = (value instanceof Date) ? value : new Date(value);
-    if (Number.isNaN(d.getTime())) return String(value);
-    const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
-    return `${y}-${m}-${day}`;
-  }
-
-  function getByHints(obj, exactHints = [], predicate = null) {
-    for (const k of exactHints) if (k in obj) return obj[k];
-    const keys = Object.keys(obj);
-    for (const k of exactHints) {
-      const hit = keys.find(kk => kk.toLowerCase() === String(k).toLowerCase());
-      if (hit) return obj[hit];
-    }
-    if (typeof predicate === 'function') {
-      const hit = keys.find(kk => predicate(kk.toLowerCase()));
-      if (hit) return obj[hit];
-    }
-    return '';
-  }
-
-  function renderTable(container, rows) {
-    if (!rows || rows.length === 0) {
-      container.innerHTML = `<p class="msg info">No hay datos para mostrar.</p>`;
-      return;
-    }
-    const header = `
-      <tr>
-        <th>ID Factura</th>
-        <th>Medio de Pago</th>
-        <th>Referencia</th>
-        <th>Fecha Pago</th>
-      </tr>`;
-    const body = rows.map(p => {
-      const idFacturaRaw = getByHints(p,
-        ['idFactura','facturaId','IdFactura','IDFactura','ID_Factura','id_factura'],
-        k => k.includes('id') && k.includes('factura')
-      );
-      const medioRaw = getByHints(p,
-        ['tipoMedioPago','medioPago','TipoMedioPago','tipo_medio_pago'],
-        k => k.includes('medio') || k.includes('pago')
-      );
-      const refRaw = getByHints(p,
-        ['numeroRef','referencia','NumeroRef','numero_ref'], k => k.includes('ref')
-      );
-      const fechaRaw = getByHints(p,
-        ['fechaPago','FechaPago','fecha','createdAt','FECHA_PAGO','fecha_pago'],
-        k => k.includes('fecha')
-      );
-
-      return `<tr>
-        <td>${escapeHtml(idFacturaRaw)}</td>
-        <td>${escapeHtml(medioRaw)}</td>
-        <td>${escapeHtml(refRaw)}</td>
-        <td>${escapeHtml(fmtDate(fechaRaw))}</td>
-      </tr>`;
-    }).join('');
-    container.innerHTML = `<table>${header}${body}</table>`;
-  }
-
-  function extraerCodigoError(err) {
-    try {
-      if (err?.json && typeof err.json.CodigoError !== 'undefined') return String(err.json.CodigoError);
-      if (err?.body) {
-        const j = JSON.parse(err.body);
-        if (j && typeof j.CodigoError !== 'undefined') return String(j.CodigoError);
-      }
-    } catch { /* ignore */ }
-    const m = (err?.message || '').match(/(\d{4,})/);
-    return m ? m[1] : null;
-  }
-
-  function explicarCodigo(code) {
-    if (String(code) === '50004') {
-      return `
-        <br><strong>Posibles causas (50004):</strong>
-        <ul>
-          <li>Factura no existe o no está <em>pendiente</em>.</li>
-          <li>El <em>ID</em> de medio de pago no es válido.</li>
-          <li>Fecha inválida (use YYYY-MM-DD) o fuera de rango.</li>
-          <li>Referencia duplicada.</li>
-        </ul>`;
-    }
-    return '';
-  }
-
-  async function pagarFactura() {
-    const idFacturaEl = document.getElementById('idFactura');
-    const tipoMedioPagoEl = document.getElementById('tipoMedioPago');
-    const numeroRefEl = document.getElementById('numeroRef');
-    const fechaPagoEl = document.getElementById('fechaPago');
-    const btn = document.getElementById('btnPagar');
-    const msg = document.getElementById('pagarMsg');
-
-    const idFacturaNum = parseInt(idFacturaEl.value.trim(), 10);
-    const tipoMedioPagoNum = parseInt(tipoMedioPagoEl.value.trim(), 10);
-    const numeroRef = numeroRefEl.value.trim();
-    const fechaPago = fechaPagoEl.value; // YYYY-MM-DD
-
-    msg.style.display = 'block';
-    msg.className = 'msg info';
-    msg.textContent = '';
-
-    if (!Number.isInteger(idFacturaNum) || idFacturaNum <= 0 ||
-        !Number.isInteger(tipoMedioPagoNum) || tipoMedioPagoNum <= 0 ||
-        !numeroRef || !fechaPago) {
-      msg.className = 'msg error';
-      msg.textContent = 'Completa todos los campos. idFactura y tipoMedioPago deben ser enteros > 0.';
-      return;
-    }
-
-    try {
-      btn.disabled = true;
-      msg.textContent = 'Registrando pago...';
-
-      const payload = { idFactura: idFacturaNum, tipoMedioPago: tipoMedioPagoNum, numeroRef, fechaPago };
-      const data = await apiFetch('/pagarFactura', {
-        method: 'POST',
-        body: JSON.stringify(payload)
+    async function apiFetch(path, options = {}) {
+      const resp = await fetch(`${API_BASE}${path}`, {
+        headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+        ...options
       });
 
-      if (data && data.success === false) {
-        throw new Error(data.CodigoError || data.error || 'Operación fallida');
+      const raw = await resp.text().catch(() => '');
+      let data;
+      try { data = raw ? JSON.parse(raw) : null; } catch { data = null; }
+
+      if (!resp.ok) {
+        const msg =
+          (data && (data.error || data.CodigoError || data.message)) ||
+          (raw ? `HTTP ${resp.status} ${resp.statusText} – ${raw}` : `HTTP ${resp.status} ${resp.statusText}`);
+        const err = new Error(String(msg));
+        err.status = resp.status;
+        err.body = raw;
+        throw err;
       }
 
+      if (data && Array.isArray(data.recordset)) return data.recordset;
+      if (Array.isArray(data)) return data;
+      return data;
+    }
+
+    function setLoading(el, msg='Cargando...') { el.innerHTML = `<p class="msg info">${msg}</p>`; }
+    function setError(el, msg='Error desconocido') { el.innerHTML = `<p class="msg error">${msg}</p>`; }
+
+    function escapeHtml(v) {
+      return String(v ?? '')
+        .replaceAll('&','&amp;').replaceAll('<','&lt;')
+        .replaceAll('>','&gt;').replaceAll('"','&quot;')
+        .replaceAll("'","&#039;");
+    }
+
+    function fmtDate(value) {
+      if (!value) return '';
+      const d = (value instanceof Date) ? value : new Date(value);
+      if (Number.isNaN(d.getTime())) return String(value);
+      const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function getByHints(obj, exactHints = [], predicate = null) {
+      for (const k of exactHints) if (k in obj) return obj[k];
+      const keys = Object.keys(obj);
+      for (const k of exactHints) {
+        const hit = keys.find(kk => kk.toLowerCase() === String(k).toLowerCase());
+        if (hit) return obj[hit];
+      }
+      if (typeof predicate === 'function') {
+        const hit = keys.find(kk => predicate(kk.toLowerCase()));
+        if (hit) return obj[hit];
+      }
+      return '';
+    }
+
+    function renderTable(container, rows) {
+      if (!rows || rows.length === 0) {
+        container.innerHTML = `<p class="msg info">No hay datos para mostrar.</p>`;
+        return;
+      }
+      const header = `
+        <tr>
+          <th>ID Factura</th>
+          <th>Medio de Pago</th>
+          <th>Referencia</th>
+          <th>Fecha Pago</th>
+        </tr>`;
+      const body = rows.map(p => {
+        const idFacturaRaw = getByHints(p,
+          ['idFactura','facturaId','IdFactura','IDFactura','ID_Factura','id_factura'],
+          k => k.includes('id') && k.includes('factura')
+        );
+        const medioRaw = getByHints(p,
+          ['tipoMedioPago','medioPago','TipoMedioPago','tipo_medio_pago'],
+          k => k.includes('medio') || k.includes('pago')
+        );
+        const refRaw = getByHints(p,
+          ['numeroRef','referencia','NumeroRef','numero_ref'], k => k.includes('ref')
+        );
+        const fechaRaw = getByHints(p,
+          ['fechaPago','FechaPago','fecha','createdAt','FECHA_PAGO','fecha_pago'],
+          k => k.includes('fecha')
+        );
+
+        return `<tr>
+          <td>${escapeHtml(idFacturaRaw)}</td>
+          <td>${escapeHtml(medioRaw)}</td>
+          <td>${escapeHtml(refRaw)}</td>
+          <td>${escapeHtml(fmtDate(fechaRaw))}</td>
+        </tr>`;
+      }).join('');
+      container.innerHTML = `<table>${header}${body}</table>`;
+    }
+
+    async function pagarFactura() {
+      const idFacturaEl = document.getElementById('idFactura');
+      const tipoMedioPagoEl = document.getElementById('tipoMedioPago');
+      const numeroRefEl = document.getElementById('numeroRef');
+      const fechaPagoEl = document.getElementById('fechaPago');
+      const btn = document.getElementById('btnPagar');
+      const msg = document.getElementById('pagarMsg');
+
+      const idFactura = idFacturaEl.value.trim();
+      const tipoMedioPago = tipoMedioPagoEl.value.trim();
+      const numeroRef = numeroRefEl.value.trim();
+      const fechaPago = fechaPagoEl.value; // ← enviar tal cual lo da el input
+
+      msg.style.display = 'block';
       msg.className = 'msg info';
-      msg.textContent = (data && (data.message || data.mensaje)) || 'Pago registrado correctamente.';
+      msg.textContent = '';
 
-      idFacturaEl.value = '';
-      tipoMedioPagoEl.value = '';
-      numeroRefEl.value = '';
-      fechaPagoEl.value = '';
+      if (!idFactura || !tipoMedioPago || !numeroRef || !fechaPago) {
+        msg.className = 'msg error';
+        msg.textContent = 'Todos los campos son obligatorios.';
+        return;
+      }
 
-      await mostrarPagos();
-    } catch (err) {
-      const code = extraerCodigoError(err);
-      const extra = code ? explicarCodigo(code) : '';
-      msg.className = 'msg error';
-      msg.innerHTML = `Error: ${escapeHtml(err.message)}${extra}`;
-      console.error('[pagarFactura] error', { status: err.status, body: err.body, message: err.message, CodigoError: code });
-    } finally {
-      btn.disabled = false;
-    }
-  }
+      try {
+        btn.disabled = true;
+        msg.textContent = 'Registrando pago...';
 
-  async function mostrarPagos() {
-    const panel = document.getElementById('pagosPanel');
-    const btn = document.getElementById('btnMostrarPagos');
-    try {
-      btn.disabled = true;
-      setLoading(panel, 'Cargando pagos...');
-      const rows = await apiFetch('/pagos');
-      renderTable(panel, rows);
-    } catch (err) {
-      setError(panel, `No se pudieron cargar los pagos: ${err.message}`);
-    } finally {
-      btn.disabled = false;
-    }
-  }
+        const payload = { idFactura, tipoMedioPago, numeroRef, fechaPago };
+        console.debug('[pagarFactura] payload', payload); // debug
 
-  async function mostrarPagosPorFinca() {
-    const numeroFincaEl = document.getElementById('numeroFinca');
-    const numeroFinca = numeroFincaEl.value.trim();
-    const panel = document.getElementById('pagosFincaPanel');
-    const btn = document.getElementById('btnBuscarFinca');
+        const data = await apiFetch('/pagarFactura', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
 
-    if (!numeroFinca) {
-      setError(panel, 'Ingresa un número de finca.');
-      return;
+        if (data && data.success === false) {
+          throw new Error(data.CodigoError || data.error || 'Operación fallida');
+        }
+
+        msg.className = 'msg info';
+        msg.textContent = (data && (data.message || data.mensaje)) || 'Pago registrado correctamente.';
+
+        idFacturaEl.value = '';
+        tipoMedioPagoEl.value = '';
+        numeroRefEl.value = '';
+        fechaPagoEl.value = '';
+
+        await mostrarPagos();
+      } catch (err) {
+        msg.className = 'msg error';
+        msg.textContent = `Error: ${err.message}`;
+        console.error('[pagarFactura] error', { status: err.status, body: err.body, message: err.message });
+      } finally {
+        btn.disabled = false;
+      }
     }
 
-    try {
-      btn.disabled = true;
-      setLoading(panel, 'Buscando pagos de la finca...');
-      const rows = await apiFetch(`/pagos/${encodeURIComponent(numeroFinca)}`);
-      renderTable(panel, rows);
-    } catch (err) {
-  const msg = document.getElementById('pagarMsg');
-  // Intenta parsear JSON para ver si viene diagnostico
-  let json = null;
-  try { json = err?.json || (err?.body ? JSON.parse(err.body) : null); } catch {}
-  const codigo = json?.CodigoError ?? null;
-
-  // Mensaje base
-  let html = `Error: ${escapeHtml(err.message)}`;
-
-  // Si es 50004 y trae diagnostico, agrega UI para ayudar
-  if (String(codigo) === '50004' && json?.diagnostico) {
-    const d = json.diagnostico; // { solicitado, masViejaPend, numeroFinca, estadoSolicitado }
-    const masVieja = d.masViejaPend;
-    html += `
-      <br><strong>Debes pagar primero la factura más antigua de la finca ${escapeHtml(d.numeroFinca)}.</strong>
-      <div style="margin-top:8px">
-        <div>Solicitada: <code>${escapeHtml(d.solicitado)}</code></div>
-        <div>Más vieja pendiente: <code id="facturaBloqueante">${escapeHtml(masVieja)}</code></div>
-      </div>
-      <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
-        <button id="btnUsarMasVieja" style="padding:8px 12px; border:none; border-radius:6px; background:#4562e0; color:#fff; cursor:pointer;">
-          Usar ${escapeHtml(masVieja)}
-        </button>
-      </div>
-    `;
-    // Inyecta botón que auto-rellena el idFactura con la bloqueante
-    setTimeout(() => {
-      const b = document.getElementById('btnUsarMasVieja');
-      b?.addEventListener('click', () => {
-        const idBloq = document.getElementById('facturaBloqueante')?.textContent?.trim();
-        if (idBloq) document.getElementById('idFactura').value = idBloq;
-      });
-    }, 0);
-  }
-
-  msg.className = 'msg error';
-  msg.innerHTML = html;
-  console.error('[pagarFactura] error', { status: err.status, body: err.body, message: err.message, json });
-} finally {
-      btn.disabled = false;
+    async function mostrarPagos() {
+      const panel = document.getElementById('pagosPanel');
+      const btn = document.getElementById('btnMostrarPagos');
+      try {
+        btn.disabled = true;
+        setLoading(panel, 'Cargando pagos...');
+        const rows = await apiFetch('/pagos');
+        renderTable(panel, rows);
+      } catch (err) {
+        setError(panel, `No se pudieron cargar los pagos: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+      }
     }
-  }
 
-  document.getElementById('btnPagar').addEventListener('click', pagarFactura);
-  document.getElementById('btnLimpiar').addEventListener('click', () => {
-    ['idFactura','tipoMedioPago','numeroRef','fechaPago'].forEach(id => document.getElementById(id).value = '');
-    const msg = document.getElementById('pagarMsg'); msg.style.display = 'none'; msg.textContent = '';
-  });
-  document.getElementById('btnMostrarPagos').addEventListener('click', mostrarPagos);
-  document.getElementById('btnRefrescarPagos').addEventListener('click', mostrarPagos);
-  document.getElementById('btnBuscarFinca').addEventListener('click', mostrarPagosPorFinca);
-  document.getElementById('panelPagar').addEventListener('keydown', (e) => { if (e.key === 'Enter') pagarFactura(); });
-  document.getElementById('numeroFinca').addEventListener('keydown', (e) => { if (e.key === 'Enter') mostrarPagosPorFinca(); });
-</script>
+    async function mostrarPagosPorFinca() {
+      const numeroFincaEl = document.getElementById('numeroFinca');
+      const numeroFinca = numeroFincaEl.value.trim();
+      const panel = document.getElementById('pagosFincaPanel');
+      const btn = document.getElementById('btnBuscarFinca');
 
+      if (!numeroFinca) {
+        setError(panel, 'Ingresa un número de finca.');
+        return;
+      }
 
+      try {
+        btn.disabled = true;
+        setLoading(panel, 'Buscando pagos de la finca...');
+        const rows = await apiFetch(`/pagos/${encodeURIComponent(numeroFinca)}`);
+        renderTable(panel, rows);
+      } catch (err) {
+        setError(panel, `No se pudieron cargar los pagos de la finca: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    document.getElementById('btnPagar').addEventListener('click', pagarFactura);
+    document.getElementById('btnLimpiar').addEventListener('click', () => {
+      ['idFactura','tipoMedioPago','numeroRef','fechaPago'].forEach(id => document.getElementById(id).value = '');
+      const msg = document.getElementById('pagarMsg'); msg.style.display = 'none'; msg.textContent = '';
+    });
+    document.getElementById('btnMostrarPagos').addEventListener('click', mostrarPagos);
+    document.getElementById('btnRefrescarPagos').addEventListener('click', mostrarPagos);
+    document.getElementById('btnBuscarFinca').addEventListener('click', mostrarPagosPorFinca);
+    document.getElementById('panelPagar').addEventListener('keydown', (e) => { if (e.key === 'Enter') pagarFactura(); });
+    document.getElementById('numeroFinca').addEventListener('keydown', (e) => { if (e.key === 'Enter') mostrarPagosPorFinca(); });
+  </script>
 </body>
 </html>
 
