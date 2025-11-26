@@ -309,26 +309,43 @@ router.post('/registrarPropiedadPersona', async (req, res) => {
     }
 });
 
+// POST /api/asignarCCPropiedad
+router.post('/asignarCCPropiedad', async (req, res) => {
+  // Validación temprana para status code correcto
+  const { numeroFinca, idCC, tipoAso, fechaRegistro } = req.body || {};
+  if (!numeroFinca || !idCC || !tipoAso) {
+    return res.status(400).json({
+      success: false,
+      error: 'numeroFinca, idCC y tipoAso son requeridos'
+    });
+  }
 
-router.post("/asignarCCPropiedad", async (req, res) => {
-    try {
-        const resultado = await asignarCCPropiedad(req.body);
-        res.status(200).json(resultado);
-    } catch (err) {
-        console.error("Error en /asignarCCPropiedad", err);
-        res.status(500).json({ error: "Error interno del servidor" });
-    }
+  try {
+    const resultado = await asignarCCPropiedad({ numeroFinca, idCC, tipoAso, fechaRegistro });
+    const code = resultado.success ? 200 : 422; // 422: datos válidos pero operación no aplicada
+    return res.status(code).json(resultado);
+  } catch (err) {
+    console.error('Error en /asignarCCPropiedad', err);
+    return res.status(500).json({ success: false, error: 'Error interno del servidor' });
+  }
 });
 
-router.post("/asignar/propiedad-persona", async (req, res) => {
-    try {
-        const resultado = await asignarPropiedadPersona(req.body);
-        res.status(200).json(resultado);
-    } catch (err) {
-        console.error("Error en /asignar/propiedad-persona:", err);
-        res.status(500).json({ error: "Error interno del servidor" });
+
+router.post('/asignar/propiedad-persona', async (req, res) => {
+  try {
+    const { valorDocId, numeroFinca, tipoAsoId } = req.body || {};
+    if (!valorDocId || !numeroFinca || !tipoAsoId) {
+      return res.status(400).json({ success: false, error: 'Faltan datos: valorDocId, numeroFinca, tipoAsoId' });
     }
+
+    const resultado = await asignarPropiedadPersona(req.body);
+    return res.status(resultado.success ? 200 : 422).json(resultado);
+  } catch (err) {
+    console.error('Error en /asignar/propiedad-persona:', err);
+    return res.status(500).json({ success: false, error: 'Error interno del servidor' });
+  }
 });
+
 
 router.get('/pagos', async (req, res) => {
     try {

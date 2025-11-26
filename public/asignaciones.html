@@ -62,12 +62,12 @@
   async function ensureJson(res) {
     if (!res.ok) {
       const t = await res.text().catch(() => '');
-      throw new Error(`HTTP ${res.status} ${res.statusText} – ${t.slice(0,120)}`);
+      throw new Error(`HTTP ${res.status} ${res.statusText} – ${t.slice(0,200)}`);
     }
     const ct = res.headers.get('content-type') || '';
     if (!ct.includes('application/json')) {
       const t = await res.text().catch(() => '');
-      throw new Error(`Respuesta no-JSON (${ct}): ${t.slice(0,120)}`);
+      throw new Error(`Respuesta no-JSON (${ct}): ${t.slice(0,200)}`);
     }
     return res.json();
   }
@@ -112,7 +112,6 @@
       const tipoAso = parseInt(document.getElementById("selectAsoCC").value, 10);
       const fechaRegistro = (document.getElementById("fechaCC").value || "").trim();
 
-      // Validación front para evitar undefined/null:
       if (!numeroFinca) throw new Error("numeroFinca requerido");
       if (!Number.isInteger(idCC)) throw new Error("idCC inválido");
       if (!Number.isInteger(tipoAso)) throw new Error("tipoAso inválido");
@@ -130,7 +129,7 @@
         document.getElementById("fincaCC").value = "";
         document.getElementById("fechaCC").value = "";
       } else {
-        msg.textContent = "Error: " + (data.message || JSON.stringify(data));
+        msg.textContent = "Error: " + (data.error || JSON.stringify(data));
         msg.className = "msg error";
       }
     } catch (err) {
@@ -168,7 +167,7 @@
         document.getElementById("fincaPersona").value = "";
         document.getElementById("fechaPP").value = "";
       } else {
-        msg.textContent = "Error: " + (data.message || JSON.stringify(data));
+        msg.textContent = "Error: " + (data.error || JSON.stringify(data));
         msg.className = "msg error";
       }
     } catch (err) {
