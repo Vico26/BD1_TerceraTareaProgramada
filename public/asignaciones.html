@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+\<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -40,13 +40,22 @@
             margin-top: 0;
             color: white;
         }
+        .msg {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .success {
+            color: green;
+        }
+        .error {
+            color: red;
+        }
     </style>
 </head>
 <body>
 
     <h1>Asignaciones</h1>
 
-   
     <div class="panel">
         <h2>Asignar CC a Propiedad</h2>
 
@@ -63,9 +72,8 @@
         <input type="date" id="fechaCC">
 
         <button onclick="asignarCC()">Asignar CC</button>
+        <div id="msgCC" class="msg"></div>
     </div>
-
-
 
     <div class="panel">
         <h2>Asignación Propiedad – Persona</h2>
@@ -83,89 +91,194 @@
         <input type="date" id="fechaPP">
 
         <button onclick="asignarPropiedadPersona()">Asignar Propiedad a Persona</button>
+        <div id="msgPropiedadPersona" class="msg"></div>
     </div>
 
-
-
     <script>
-   
         async function cargarSelect(url, idSelect, campoId, campoNombre) {
             try {
+                console.log("🔍 Cargando datos de:", url);
                 const res = await fetch(url);
                 const data = await res.json();
 
-                if (!data.success && !Array.isArray(data)) {
-                    console.error("Error cargando", url);
-                    return;
+                console.log("📦 Estructura completa de la respuesta:", data);
+                console.log("🔍 Propiedades de data:", Object.keys(data));
+                
+                if (data.recordset) {
+                    console.log("📊 Recordset encontrado:", data.recordset);
+                }
+                if (data.output) {
+                    console.log("📤 Output encontrado:", data.output);
+                }
+                if (data.returnValue !== undefined) {
+                    console.log("🔄 Return value:", data.returnValue);
                 }
 
                 const select = document.getElementById(idSelect);
                 select.innerHTML = "";
 
-                // Si manejarRespuestaSP lo envuelve
-                const recordset = data.recordset || data;
+                // DEBUG: Intentar diferentes estructuras
+                let items = [];
+                
+                // Opción 1: data es directamente el array
+                if (Array.isArray(data)) {
+                    console.log("✅ Data es un array directo");
+                    items = data;
+                }
+                // Opción 2: data.recordset existe y es array
+                else if (data.recordset && Array.isArray(data.recordset)) {
+                    console.log("✅ Usando data.recordset");
+                    items = data.recordset;
+                }
+                // Opción 3: data.output existe y es array
+                else if (data.output && Array.isArray(data.output)) {
+                    console.log("✅ Usando data.output");
+                    items = data.output;
+                }
+                // Opción 4: data tiene una propiedad que es array
+                else {
+                    console.log("🔍 Buscando propiedad array en data...");
+                    for (let key in data) {
+                        if (Array.isArray(data[key])) {
+                            console.log("✅ Encontrado array en propiedad:", key);
+                            items = data[key];
+                            break;
+                        }
+                    }
+                }
 
-                recordset.forEach(item => {
+                console.log("🎯 Items a cargar:", items);
+
+                if (items.length === 0) {
+                    console.warn("⚠️ No se encontraron items para cargar");
+                    select.innerHTML = "<option>No hay datos disponibles</option>";
+                    return;
+                }
+
+                // Verificar que los campos existen en el primer item
+                if (items[0]) {
+                    console.log("🔍 Campos disponibles en el primer item:", Object.keys(items[0]));
+                    console.log("🔍 Buscando campo ID:", campoId, " - Existe:", items[0].hasOwnProperty(campoId));
+                    console.log("🔍 Buscando campo Nombre:", campoNombre, " - Existe:", items[0].hasOwnProperty(campoNombre));
+                }
+
+                // Cargar las opciones
+                items.forEach(item => {
                     const op = document.createElement("option");
-                    op.value = item[campoId];       // ENVÍA ID
-                    op.textContent = item[campoNombre]; // MUESTRA NOMBRE
+                    
+                    // Verificar que los campos existen
+                    if (!item[campoId]) {
+                        console.warn("⚠️ Campo ID no encontrado:", campoId, "en item:", item);
+                    }
+                    if (!item[campoNombre]) {
+                        console.warn("⚠️ Campo Nombre no encontrado:", campoNombre, "en item:", item);
+                    }
+                    
+                    op.value = item[campoId] || "";
+                    op.textContent = item[campoNombre] || "Sin nombre";
                     select.appendChild(op);
                 });
 
+                console.log("✅ Select cargado exitosamente con", items.length, "items");
+
             } catch (err) {
-                console.error("Error:", err);
+                console.error("❌ Error cargando", url, ":", err);
+                const select = document.getElementById(idSelect);
+                select.innerHTML = "<option>Error cargando datos</option>";
             }
         }
 
         window.onload = () => {
+            console.log("🚀 Iniciando carga de datos...");
+            
+            // Cargar tipos de asociación (usando el endpoint que funciona)
+            cargarSelect("/api/tipoAsociacion", "selectAsoCC", "idTipoAso", "Nombre");
+            cargarSelect("/api/tipoAsociacion", "selectAsoPP", "idTipoAso", "Nombre");
+            
+            // Cargar centros de costo
             cargarSelect("/ccpropiedad", "selectCC", "idCC", "nombreCC");
-
-            cargarSelect("/tipoAsociacion", "selectAsoCC",
-                "idTipoAsociacion", "nombreTipoAsociacion");
-
-            cargarSelect("/tipoAsociacion", "selectAsoPP",
-                "idTipoAsociacion", "nombreTipoAsociacion");
         };
 
-
         async function asignarCC() {
-            const body = {
-                numeroFinca: fincaCC.value,
-                idCC: parseInt(selectCC.value),
-                tipoAso: parseInt(selectAsoCC.value),
-                fechaRegistro: fechaCC.value
-            };
+            const msg = document.getElementById("msgCC");
+            msg.innerHTML = "Procesando...";
+            msg.className = "msg";
 
-            const res = await fetch("/asignarCCPropiedad", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(body)
-            });
+            try {
+                const body = {
+                    numeroFinca: document.getElementById("fincaCC").value,
+                    idCC: parseInt(document.getElementById("selectCC").value),
+                    tipoAso: parseInt(document.getElementById("selectAsoCC").value),
+                    fechaRegistro: document.getElementById("fechaCC").value
+                };
 
-            const data = await res.json();
-            alert("Resultado: " + JSON.stringify(data));
+                console.log("Enviando CC:", body);
+
+                const res = await fetch("/asignarCCPropiedad", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await res.json();
+                console.log("Respuesta CC:", data);
+
+                if (data.success) {
+                    msg.innerHTML = "CC asignado correctamente";
+                    msg.className = "msg success";
+                    document.getElementById("fincaCC").value = "";
+                    document.getElementById("fechaCC").value = "";
+                } else {
+                    msg.innerHTML = "Error: " + (data.message || JSON.stringify(data));
+                    msg.className = "msg error";
+                }
+            } catch (err) {
+                console.error("Error asignando CC:", err);
+                msg.innerHTML = "Error de conexión: " + err.message;
+                msg.className = "msg error";
+            }
         }
 
-
-   
         async function asignarPropiedadPersona() {
-            const body = {
-                valorDocId: valorDoc.value,
-                numeroFinca: fincaPersona.value,
-                tipoAsoId: parseInt(selectAsoPP.value),
-                fechaRegistro: fechaPP.value
-            };
+            const msg = document.getElementById("msgPropiedadPersona");
+            msg.innerHTML = "Procesando...";
+            msg.className = "msg";
 
-            const res = await fetch("/asignar/propiedad-persona", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(body)
-            });
+            try {
+                const body = {
+                    valorDocId: document.getElementById("valorDoc").value,
+                    numeroFinca: document.getElementById("fincaPersona").value,
+                    tipoAsoId: parseInt(document.getElementById("selectAsoPP").value),
+                    fechaRegistro: document.getElementById("fechaPP").value
+                };
 
-            const data = await res.json();
-            alert("Resultado: " + JSON.stringify(data));
+                console.log("Enviando propiedad-persona:", body);
+
+                const res = await fetch("/asignar/propiedad-persona", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await res.json();
+                console.log("Respuesta propiedad-persona:", data);
+
+                if (data.success) {
+                    msg.innerHTML = "Asignación realizada correctamente";
+                    msg.className = "msg success";
+                    document.getElementById("valorDoc").value = "";
+                    document.getElementById("fincaPersona").value = "";
+                    document.getElementById("fechaPP").value = "";
+                } else {
+                    msg.innerHTML = "Error: " + (data.message || JSON.stringify(data));
+                    msg.className = "msg error";
+                }
+            } catch (err) {
+                console.error("Error asignando propiedad-persona:", err);
+                msg.innerHTML = "Error de conexión: " + err.message;
+                msg.className = "msg error";
+            }
         }
-
     </script>
 
 </body>
