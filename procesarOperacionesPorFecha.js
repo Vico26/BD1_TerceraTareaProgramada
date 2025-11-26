@@ -22,5 +22,14 @@ async function procesarOperacionesPorFecha(pathXML) {
         };
     }
 }
+if (require.main === module) {
+    (async () => {
+        const pathDePrueba = 'C:\\Users\\USUARIO\\Documents\\GitHub\\BD1_TerceraTareaProgramada\\XMLS\\xmlUltimo.xml';
+
+        const resultado = await procesarOperacionesPorFecha(pathDePrueba);
+        console.log('Resultado prueba:', resultado);
+        process.exit(0);
+    })();
+}
 
 module.exports = { procesarOperacionesPorFecha };

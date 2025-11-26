@@ -27,6 +27,7 @@ const { pagarFactura } = require('./pagarFactura');//POBRADA Y SI SIRVE
 const { procesoMasivoFacturacion } = require('./procesoMasivoFacturacion');//PROBADA Y SI SIRVE
 const { procesoMasivoCortes } = require('./procesoMasivoCorte');//PROBADA Y SI SIRVE 
 const { procesoMasivoReconexion } = require('./procesoMasivoReconexion');//PROBADA Y SI SIRVE
+const { procesarOperacionesPorFecha } = require('./procesarOperacionesPorFecha');
 
 
 router.post('/loginAdmin', async (req, res) => { //YA SIRVE EN INDEX.HTML
@@ -123,28 +124,66 @@ router.get('/buscarPropiedades', async (req, res) => {
 });
 
 
-router.post('/pagarFactura', async (req, res) => {
-    try {
-        const { idFactura, tipoMedioPago, numeroRef, fechaPago } = req.body;
+router.post('/pagarFactura/masvieja', async (req, res) => {
+  try {
+    let { numeroFinca, idFactura, tipoMedioPago, numeroRef, fechaPago } = req.body;
 
-        if (!idFactura || !tipoMedioPago || !numeroRef || !fechaPago) {
-            return res.status(400).json({ error: 'Faltan datos' });
-        }
-
-        const resultado = await pagarFactura({ idFactura, tipoMedioPago, numeroRef, fechaPago });
-
-        if (resultado.returnValue !== 0) {
-            return res.status(400).json({ CodigoError: resultado.returnValue });
-        }
-
-        const info = resultado.recordset?.[0] || { mensaje: 'Pago registrado' };
-        return res.json({ success: true, ...info });
-
-    } catch (err) {
-        console.error('Error en /pagarFactura', err);
-        res.status(500).json({ error: 'Error interno del servidor' });
+    const tipoMedioPagoInt = Number(tipoMedioPago);
+    if (!numeroFinca && (!idFactura || !Number.isInteger(Number(idFactura)))) {
+      return res.status(400).json({ success: false, error: 'Proporcione numeroFinca o idFactura válido' });
     }
+    if (!Number.isInteger(tipoMedioPagoInt) || !numeroRef || !fechaPago) {
+      return res.status(400).json({ success: false, error: 'Faltan datos para el pago' });
+    }
+
+    const pool = await sql.connect(config);
+
+    // Si vino idFactura, obtener numeroFinca de esa factura (y validar existencia)
+    if (!numeroFinca) {
+      const r1 = await pool.request()
+        .input('id', sql.Int, Number(idFactura))
+        .query(`SELECT TOP 1 numeroFinca FROM dbo.Factura WHERE idFactura = @id`);
+      if (!r1.recordset?.length) {
+        return res.status(404).json({ success: false, error: 'Factura no encontrada' });
+      }
+      numeroFinca = r1.recordset[0].numeroFinca;
+    }
+
+    // Buscar la más vieja pendiente de esa finca
+    const r2 = await pool.request()
+      .input('finca', sql.NVarChar(128), numeroFinca)
+      .query(`
+        SELECT TOP 1 idFactura
+        FROM dbo.Factura
+        WHERE numeroFinca = @finca AND estado = 1     -- 1 = pendiente
+        ORDER BY fechaFactura ASC, idFactura ASC
+      `);
+
+    if (!r2.recordset?.length) {
+      return res.status(400).json({ success: false, error: 'No hay facturas pendientes para esa finca' });
+    }
+
+    const idMasVieja = r2.recordset[0].idFactura;
+
+    // Ejecutar el SP sobre la más vieja
+    const resultado = await pagarFactura(idMasVieja, tipoMedioPagoInt, numeroRef, fechaPago);
+    if (typeof resultado?.returnValue === 'number' && resultado.returnValue !== 0) {
+      return res.status(400).json({ success: false, CodigoError: resultado.returnValue });
+    }
+
+    const info = resultado?.recordset?.[0] || {};
+    return res.json({
+      success: true,
+      message: info.mensaje || 'Pago registrado',
+      pagada: idMasVieja,
+      finca: numeroFinca
+    });
+  } catch (err) {
+    console.error('POST /pagarFactura/masvieja error:', err);
+    return res.status(500).json({ success: false, error: 'Error interno del servidor' });
+  }
 });
+
 
 router.post('/masivos/facturacion', async (req, res) => {
     try {
@@ -388,5 +427,37 @@ router.get('/ccpropiedad', async (req, res) => {
     }
 });
 
+router.post('/procesos/operaciones-por-fecha', async (req, res) => {
+    try {
+        const { pathXML } = req.body;   // ejemplo: "C:\\Users\\USUARIO\\...\\xmlUltimo.xml"
+
+        if (!pathXML) {
+            return res.status(400).json({ error: 'Falta pathXML' });
+        }
+
+        const resultado = await procesarOperacionesPorFecha(pathXML);
+
+        // Error a nivel de conexión/JS
+        if (resultado.success === false && resultado.error) {
+            console.error('Error en sp_ProcesarOperacionesPorFecha:', resultado.error);
+            return res.status(500).json({ error: 'Error interno al procesar operaciones' });
+        }
+
+        // SP devolvió código distinto de 0
+        if (resultado.returnValue !== 0) {
+            return res.status(400).json({ CodigoError: resultado.returnValue });
+        }
+
+        // Todo bien
+        return res.json({
+            success: true,
+            message: 'Operaciones procesadas correctamente para el XML indicado'
+        });
+
+    } catch (err) {
+        console.error('Error en /procesos/operaciones-por-fecha:', err);
+        return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
 
 module.exports = router;

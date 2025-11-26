@@ -26,3 +26,4 @@ async function obtenerTodasLasFacturas() {
 }
 
 module.exports = { obtenerTodasLasFacturas };
+//obtenerTodasLasFacturas();  
