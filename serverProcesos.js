@@ -398,7 +398,7 @@ router.get('/tipoAsociacion', async (req, res) => {
 
 router.get('/ccpropiedad', async (req, res) => {
     try {
-        const resultado = await obtenerCCPropiedad(); // ← tu función del módulo
+        const resultado = await obtenerCCPropiedad(); 
         return manejarRespuestaSP(res, resultado);
     } catch (err) {
         console.error('Error en /ccpropiedad', err);
