@@ -27,6 +27,7 @@ const { pagarFactura } = require('./pagarFactura');//POBRADA Y SI SIRVE
 const { procesoMasivoFacturacion } = require('./procesoMasivoFacturacion');//PROBADA Y SI SIRVE
 const { procesoMasivoCortes } = require('./procesoMasivoCorte');//PROBADA Y SI SIRVE 
 const { procesoMasivoReconexion } = require('./procesoMasivoReconexion');//PROBADA Y SI SIRVE
+const { procesarOperacionesPorFecha } = require('./procesarOperacionesPorFecha');
 
 
 router.post('/loginAdmin', async (req, res) => { //YA SIRVE EN INDEX.HTML
@@ -123,28 +124,45 @@ router.get('/buscarPropiedades', async (req, res) => {
 });
 
 
+// PATCH: serverProcesos.js (solo este handler)
 router.post('/pagarFactura', async (req, res) => {
-    try {
-        const { idFactura, tipoMedioPago, numeroRef, fechaPago } = req.body;
+  try {
+    let { idFactura, tipoMedioPago, numeroRef, fechaPago } = req.body;
 
-        if (!idFactura || !tipoMedioPago || !numeroRef || !fechaPago) {
-            return res.status(400).json({ error: 'Faltan datos' });
-        }
+    const idFacturaInt = Number(idFactura);
+    const tipoMedioPagoInt = Number(tipoMedioPago);
 
-        const resultado = await pagarFactura({ idFactura, tipoMedioPago, numeroRef, fechaPago });
-
-        if (resultado.returnValue !== 0) {
-            return res.status(400).json({ CodigoError: resultado.returnValue });
-        }
-
-        const info = resultado.recordset?.[0] || { mensaje: 'Pago registrado' };
-        return res.json({ success: true, ...info });
-
-    } catch (err) {
-        console.error('Error en /pagarFactura', err);
-        res.status(500).json({ error: 'Error interno del servidor' });
+    if (!Number.isInteger(idFacturaInt) || idFacturaInt <= 0 ||
+        !Number.isInteger(tipoMedioPagoInt) || tipoMedioPagoInt <= 0 ||
+        !numeroRef || !fechaPago) {
+      return res.status(400).json({ success: false, error: 'Faltan datos o tipos inválidos' });
     }
+
+    // OJO: la función pagarFactura tiene firma (idFactura, tipoMedioPago, numeroRef, fechaPago)
+    const resultado = await pagarFactura(idFacturaInt, tipoMedioPagoInt, numeroRef, fechaPago);
+
+    // Si el SP devolvió error de negocio
+    if (typeof resultado?.returnValue === 'number' && resultado.returnValue !== 0) {
+      // -> Pasar diagnóstico cuando sea 50004
+      if (resultado.returnValue === 50004) {
+        return res.status(400).json({
+          success: false,
+          CodigoError: 50004,
+          diagnostico: resultado.recordset?.[0] || null
+        });
+      }
+      // Otros códigos: devuélvelos tal cual
+      return res.status(400).json({ success: false, CodigoError: resultado.returnValue });
+    }
+
+    const info = resultado?.recordset?.[0] || {};
+    return res.json({ success: true, message: info.mensaje || 'Pago registrado' });
+  } catch (err) {
+    console.error('POST /pagarFactura error:', err);
+    return res.status(500).json({ success: false, error: 'Error interno del servidor' });
+  }
 });
+
 
 router.post('/masivos/facturacion', async (req, res) => {
     try {
@@ -388,5 +406,37 @@ router.get('/ccpropiedad', async (req, res) => {
     }
 });
 
+router.post('/procesos/operaciones-por-fecha', async (req, res) => {
+    try {
+        const { pathXML } = req.body;   // ejemplo: "C:\\Users\\USUARIO\\...\\xmlUltimo.xml"
+
+        if (!pathXML) {
+            return res.status(400).json({ error: 'Falta pathXML' });
+        }
+
+        const resultado = await procesarOperacionesPorFecha(pathXML);
+
+        // Error a nivel de conexión/JS
+        if (resultado.success === false && resultado.error) {
+            console.error('Error en sp_ProcesarOperacionesPorFecha:', resultado.error);
+            return res.status(500).json({ error: 'Error interno al procesar operaciones' });
+        }
+
+        // SP devolvió código distinto de 0
+        if (resultado.returnValue !== 0) {
+            return res.status(400).json({ CodigoError: resultado.returnValue });
+        }
+
+        // Todo bien
+        return res.json({
+            success: true,
+            message: 'Operaciones procesadas correctamente para el XML indicado'
+        });
+
+    } catch (err) {
+        console.error('Error en /procesos/operaciones-por-fecha:', err);
+        return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
 
 module.exports = router;

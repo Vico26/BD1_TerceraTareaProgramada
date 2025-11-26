@@ -14,5 +14,4 @@ async function procesoMasivoFacturacion(fechaOperacion) {
     }
 }
 
-
 module.exports = { procesoMasivoFacturacion };

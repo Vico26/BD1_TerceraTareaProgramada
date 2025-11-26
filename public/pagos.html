@@ -1,255 +1,283 @@
+<!-- file: public/pago.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pagar Factura</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #2d2fa3;
-            margin: 0;
-            padding: 20px;
-        }
-
-        h2 {
-            text-align: center;
-            color: #ffffff;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: auto;
-        }
-
-        .panel {
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-        }
-
-        .panel h3 {
-            margin-top: 0;
-            color: #4562e0;
-        }
-
-        .panel input[type="text"],
-        .panel input[type="number"],
-        .panel input[type="date"] {
-            width: 100%;
-            padding: 10px;
-            margin: 8px 0;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            box-sizing: border-box;
-        }
-
-        .panel button {
-            padding: 10px 15px;
-            background-color: #4562e0;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .panel button:hover {
-            background-color: #0056b3;
-        }
-
-        .results-panel table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-
-        .results-panel th, .results-panel td {
-            border: 1px solid #ccc;
-            padding: 10px;
-            text-align: left;
-        }
-
-        .results-panel th {
-            background-color: #4562e0;
-            color: white;
-        }
-
-        .results-panel td {
-            background-color: #f9f9f9;
-        }
-
-        .search-panel {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .search-panel input {
-            width: 150px;
-        }
-    </style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pagar Factura</title>
+  <style>
+    :root { --brand:#4562e0; --bg:#2d2fa3; }
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; }
+    h2 { text-align: center; color: #ffffff; }
+    .container { max-width: 900px; margin: auto; }
+    .panel { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,.1); margin-bottom: 30px; }
+    .panel h3 { margin-top: 0; color: var(--brand); }
+    .panel input[type="text"], .panel input[type="number"], .panel input[type="date"] { width: 100%; padding: 10px; margin: 8px 0; border-radius: 6px; border: 1px solid #ccc; }
+    .panel button { padding: 10px 15px; background: var(--brand); color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+    .panel button:hover { filter: brightness(.95); }
+    .panel button[disabled] { opacity: .6; cursor: not-allowed; }
+    .results-panel table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    .results-panel th, .results-panel td { border: 1px solid #e3e3e3; padding: 10px; text-align: left; }
+    .results-panel th { background: var(--brand); color: #fff; }
+    .results-panel td { background: #f9f9f9; }
+    .search-panel { display: flex; justify-content: center; gap: 10px; margin-bottom: 10px; }
+    .search-panel input { width: 200px; }
+    .row { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
+    .flex { display: flex; gap: 10px; flex-wrap: wrap; }
+    .msg { padding: 10px; border-radius: 6px; }
+    .msg.info { background:#eef2ff; color:#1e3a8a; }
+    .msg.error { background:#fee2e2; color:#7f1d1d; }
+  </style>
 </head>
 <body>
-    <div class="container">
+  <div class="container">
 
-        <!-- Panel para pagar factura -->
-        <div class="panel">
-            <h3>Pagar Factura</h3>
-            <input type="text" id="idFactura" placeholder="ID de la Factura">
-            <input type="text" id="tipoMedioPago" placeholder="Medio de Pago">
-            <input type="text" id="numeroRef" placeholder="Número de Referencia">
-            <input type="date" id="fechaPago">
-            <button onclick="pagarFactura()">Pagar</button>
-        </div>
+    <h2>Pagar Factura</h2>
 
-        <!-- Panel para pagos por finca -->
-        <div class="panel">
-            <h3>Pagos por Finca</h3>
-            <div class="search-panel">
-                <input type="text" id="numeroFinca" placeholder="Número de Finca">
-                <button onclick="mostrarPagosPorFinca()">Buscar</button>
-            </div>
-            <div class="results-panel" id="pagosFincaPanel">
-                <p>Ingresa el número de finca y presiona "Buscar" para ver los pagos.</p>
-            </div>
-        </div>
-
-        <!-- Panel para mostrar todos los pagos -->
-        <div class="panel">
-            <h3>Todos los Pagos</h3>
-            <button onclick="mostrarPagos()">Mostrar Todos los Pagos</button>
-            <div class="results-panel" id="pagosPanel">
-                <p>Haz clic en "Mostrar Todos los Pagos" para ver los pagos registrados.</p>
-            </div>
-        </div>
+    <div class="panel" id="panelPagar">
+      <h3>Registrar Pago</h3>
+      <div class="row">
+        <input type="text" id="idFactura" placeholder="ID de la Factura">
+        <input type="text" id="tipoMedioPago" placeholder="Medio de Pago">
+        <input type="text" id="numeroRef" placeholder="Número de Referencia">
+        <input type="date" id="fechaPago">
+      </div>
+      <div class="flex">
+        <button id="btnPagar">Pagar</button>
+        <button id="btnLimpiar" type="button">Limpiar</button>
+      </div>
+      <div id="pagarMsg" class="msg" style="display:none"></div>
     </div>
 
-    <script>
-        async function pagarFactura() {
-            const idFactura = document.getElementById('idFactura').value.trim();
-            const tipoMedioPago = document.getElementById('tipoMedioPago').value.trim();
-            const numeroRef = document.getElementById('numeroRef').value.trim();
-            const fechaPago = document.getElementById('fechaPago').value;
+    <div class="panel">
+      <h3>Pagos por Finca</h3>
+      <div class="search-panel">
+        <input type="text" id="numeroFinca" placeholder="Número de Finca">
+        <button id="btnBuscarFinca">Buscar</button>
+      </div>
+      <div class="results-panel" id="pagosFincaPanel">
+        <p class="msg info">Ingresa el número de finca y presiona "Buscar" para ver los pagos.</p>
+      </div>
+    </div>
 
-            if(!idFactura || !tipoMedioPago || !numeroRef || !fechaPago) {
-                alert('Todos los campos son obligatorios');
-                return;
-            }
+    <div class="panel">
+      <h3>Todos los Pagos</h3>
+      <div class="flex">
+        <button id="btnMostrarPagos">Mostrar Todos los Pagos</button>
+        <button id="btnRefrescarPagos" type="button">Refrescar</button>
+      </div>
+      <div class="results-panel" id="pagosPanel">
+        <p class="msg info">Haz clic en "Mostrar Todos los Pagos" para ver los pagos registrados.</p>
+      </div>
+    </div>
+  </div>
 
-            try {
-                const response = await fetch('/api/pagarFactura', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ idFactura, tipoMedioPago, numeroRef, fechaPago })
-                });
+  <script>
+    const API_BASE = '/api';
 
-                const data = await response.json();
+    async function apiFetch(path, options = {}) {
+      const resp = await fetch(`${API_BASE}${path}`, {
+        headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+        ...options
+      });
 
-                if(data.success) {
-                    alert('Pago registrado correctamente');
-                    document.getElementById('idFactura').value = '';
-                    document.getElementById('tipoMedioPago').value = '';
-                    document.getElementById('numeroRef').value = '';
-                    document.getElementById('fechaPago').value = '';
-                    mostrarPagos(); 
-                } else {
-                    alert('Error: ' + (data.CodigoError || data.error));
-                }
+      const raw = await resp.text().catch(() => '');
+      let data;
+      try { data = raw ? JSON.parse(raw) : null; } catch { data = null; }
 
-            } catch(err) {
-                console.error(err);
-                alert('Error de conexión con el servidor');
-            }
+      if (!resp.ok) {
+        const msg =
+          (data && (data.error || data.CodigoError || data.message)) ||
+          (raw ? `HTTP ${resp.status} ${resp.statusText} – ${raw}` : `HTTP ${resp.status} ${resp.statusText}`);
+        const err = new Error(String(msg));
+        err.status = resp.status;
+        err.body = raw;
+        throw err;
+      }
+
+      if (data && Array.isArray(data.recordset)) return data.recordset;
+      if (Array.isArray(data)) return data;
+      return data;
+    }
+
+    function setLoading(el, msg='Cargando...') { el.innerHTML = `<p class="msg info">${msg}</p>`; }
+    function setError(el, msg='Error desconocido') { el.innerHTML = `<p class="msg error">${msg}</p>`; }
+
+    function escapeHtml(v) {
+      return String(v ?? '')
+        .replaceAll('&','&amp;').replaceAll('<','&lt;')
+        .replaceAll('>','&gt;').replaceAll('"','&quot;')
+        .replaceAll("'","&#039;");
+    }
+
+    function fmtDate(value) {
+      if (!value) return '';
+      const d = (value instanceof Date) ? value : new Date(value);
+      if (Number.isNaN(d.getTime())) return String(value);
+      const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function getByHints(obj, exactHints = [], predicate = null) {
+      for (const k of exactHints) if (k in obj) return obj[k];
+      const keys = Object.keys(obj);
+      for (const k of exactHints) {
+        const hit = keys.find(kk => kk.toLowerCase() === String(k).toLowerCase());
+        if (hit) return obj[hit];
+      }
+      if (typeof predicate === 'function') {
+        const hit = keys.find(kk => predicate(kk.toLowerCase()));
+        if (hit) return obj[hit];
+      }
+      return '';
+    }
+
+    function renderTable(container, rows) {
+      if (!rows || rows.length === 0) {
+        container.innerHTML = `<p class="msg info">No hay datos para mostrar.</p>`;
+        return;
+      }
+      const header = `
+        <tr>
+          <th>ID Factura</th>
+          <th>Medio de Pago</th>
+          <th>Referencia</th>
+          <th>Fecha Pago</th>
+        </tr>`;
+      const body = rows.map(p => {
+        const idFacturaRaw = getByHints(p,
+          ['idFactura','facturaId','IdFactura','IDFactura','ID_Factura','id_factura'],
+          k => k.includes('id') && k.includes('factura')
+        );
+        const medioRaw = getByHints(p,
+          ['tipoMedioPago','medioPago','TipoMedioPago','tipo_medio_pago'],
+          k => k.includes('medio') || k.includes('pago')
+        );
+        const refRaw = getByHints(p,
+          ['numeroRef','referencia','NumeroRef','numero_ref'], k => k.includes('ref')
+        );
+        const fechaRaw = getByHints(p,
+          ['fechaPago','FechaPago','fecha','createdAt','FECHA_PAGO','fecha_pago'],
+          k => k.includes('fecha')
+        );
+
+        return `<tr>
+          <td>${escapeHtml(idFacturaRaw)}</td>
+          <td>${escapeHtml(medioRaw)}</td>
+          <td>${escapeHtml(refRaw)}</td>
+          <td>${escapeHtml(fmtDate(fechaRaw))}</td>
+        </tr>`;
+      }).join('');
+      container.innerHTML = `<table>${header}${body}</table>`;
+    }
+
+    async function pagarFactura() {
+      const idFacturaEl = document.getElementById('idFactura');
+      const tipoMedioPagoEl = document.getElementById('tipoMedioPago');
+      const numeroRefEl = document.getElementById('numeroRef');
+      const fechaPagoEl = document.getElementById('fechaPago');
+      const btn = document.getElementById('btnPagar');
+      const msg = document.getElementById('pagarMsg');
+
+      const idFactura = idFacturaEl.value.trim();
+      const tipoMedioPago = tipoMedioPagoEl.value.trim();
+      const numeroRef = numeroRefEl.value.trim();
+      const fechaPago = fechaPagoEl.value; // ← enviar tal cual lo da el input
+
+      msg.style.display = 'block';
+      msg.className = 'msg info';
+      msg.textContent = '';
+
+      if (!idFactura || !tipoMedioPago || !numeroRef || !fechaPago) {
+        msg.className = 'msg error';
+        msg.textContent = 'Todos los campos son obligatorios.';
+        return;
+      }
+
+      try {
+        btn.disabled = true;
+        msg.textContent = 'Registrando pago...';
+
+        const payload = { idFactura, tipoMedioPago, numeroRef, fechaPago };
+        console.debug('[pagarFactura] payload', payload); // debug
+
+        const data = await apiFetch('/pagarFactura', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+
+        if (data && data.success === false) {
+          throw new Error(data.CodigoError || data.error || 'Operación fallida');
         }
 
-        async function mostrarPagos() {
-            const panel = document.getElementById('pagosPanel');
-            panel.innerHTML = '<p>Cargando...</p>';
+        msg.className = 'msg info';
+        msg.textContent = (data && (data.message || data.mensaje)) || 'Pago registrado correctamente.';
 
-            try {
-                const response = await fetch('/api/pagos');
-                const data = await response.json();
+        idFacturaEl.value = '';
+        tipoMedioPagoEl.value = '';
+        numeroRefEl.value = '';
+        fechaPagoEl.value = '';
 
-                if (!data.success) {
-                    panel.innerHTML = `<p>${data.error || 'Error desconocido'}</p>`;
-                    return;
-                }
+        await mostrarPagos();
+      } catch (err) {
+        msg.className = 'msg error';
+        msg.textContent = `Error: ${err.message}`;
+        console.error('[pagarFactura] error', { status: err.status, body: err.body, message: err.message });
+      } finally {
+        btn.disabled = false;
+      }
+    }
 
-                const pagos = data.recordset;
+    async function mostrarPagos() {
+      const panel = document.getElementById('pagosPanel');
+      const btn = document.getElementById('btnMostrarPagos');
+      try {
+        btn.disabled = true;
+        setLoading(panel, 'Cargando pagos...');
+        const rows = await apiFetch('/pagos');
+        renderTable(panel, rows);
+      } catch (err) {
+        setError(panel, `No se pudieron cargar los pagos: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+      }
+    }
 
-                if (!pagos || pagos.length === 0) {
-                    panel.innerHTML = '<p>No hay pagos registrados</p>';
-                    return;
-                }
+    async function mostrarPagosPorFinca() {
+      const numeroFincaEl = document.getElementById('numeroFinca');
+      const numeroFinca = numeroFincaEl.value.trim();
+      const panel = document.getElementById('pagosFincaPanel');
+      const btn = document.getElementById('btnBuscarFinca');
 
-                let tabla = '<table><tr><th>ID Factura</th><th>Medio de Pago</th><th>Referencia</th><th>Fecha Pago</th></tr>';
-                pagos.forEach(p => {
-                    tabla += `<tr>
-                                <td>${p.idFactura}</td>
-                                <td>${p.tipoMedioPago}</td>
-                                <td>${p.numeroRef}</td>
-                                <td>${p.fechaPago}</td>
-                              </tr>`;
-                });
-                tabla += '</table>';
+      if (!numeroFinca) {
+        setError(panel, 'Ingresa un número de finca.');
+        return;
+      }
 
-                panel.innerHTML = tabla;
+      try {
+        btn.disabled = true;
+        setLoading(panel, 'Buscando pagos de la finca...');
+        const rows = await apiFetch(`/pagos/${encodeURIComponent(numeroFinca)}`);
+        renderTable(panel, rows);
+      } catch (err) {
+        setError(panel, `No se pudieron cargar los pagos de la finca: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+      }
+    }
 
-            } catch(err) {
-                console.error(err);
-                panel.innerHTML = '<p>Error de conexión con el servidor</p>';
-            }
-        }
-
-        async function mostrarPagosPorFinca() {
-            const numeroFinca = document.getElementById('numeroFinca').value.trim();
-            const panel = document.getElementById('pagosFincaPanel');
-
-            if(!numeroFinca) {
-                alert('Ingresa un número de finca');
-                return;
-            }
-
-            panel.innerHTML = '<p>Cargando...</p>';
-
-            try {
-                const response = await fetch(`/api/pagos/${numeroFinca}`);
-                const data = await response.json();
-
-                if (!data.success) {
-                    panel.innerHTML = `<p>${data.error || 'Error desconocido'}</p>`;
-                    return;
-                }
-
-                const pagos = data.recordset;
-
-                if (!pagos || pagos.length === 0) {
-                    panel.innerHTML = '<p>No hay pagos para esta finca</p>';
-                    return;
-                }
-
-                let tabla = '<table><tr><th>ID Factura</th><th>Medio de Pago</th><th>Referencia</th><th>Fecha Pago</th></tr>';
-                pagos.forEach(p => {
-                    tabla += `<tr>
-                                <td>${p.idFactura}</td>
-                                <td>${p.tipoMedioPago}</td>
-                                <td>${p.numeroRef}</td>
-                                <td>${p.fechaPago}</td>
-                              </tr>`;
-                });
-                tabla += '</table>';
-
-                panel.innerHTML = tabla;
-
-            } catch(err) {
-                console.error(err);
-                panel.innerHTML = '<p>Error de conexión con el servidor</p>';
-            }
-        }
-    </script>
+    document.getElementById('btnPagar').addEventListener('click', pagarFactura);
+    document.getElementById('btnLimpiar').addEventListener('click', () => {
+      ['idFactura','tipoMedioPago','numeroRef','fechaPago'].forEach(id => document.getElementById(id).value = '');
+      const msg = document.getElementById('pagarMsg'); msg.style.display = 'none'; msg.textContent = '';
+    });
+    document.getElementById('btnMostrarPagos').addEventListener('click', mostrarPagos);
+    document.getElementById('btnRefrescarPagos').addEventListener('click', mostrarPagos);
+    document.getElementById('btnBuscarFinca').addEventListener('click', mostrarPagosPorFinca);
+    document.getElementById('panelPagar').addEventListener('keydown', (e) => { if (e.key === 'Enter') pagarFactura(); });
+    document.getElementById('numeroFinca').addEventListener('keydown', (e) => { if (e.key === 'Enter') mostrarPagosPorFinca(); });
+  </script>
 </body>
 </html>
 

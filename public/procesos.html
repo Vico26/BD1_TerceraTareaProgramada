@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Procesos Masivos</title>
+<title>Procesos por fecha (XML)</title>
 <style>
     body {
         font-family: Arial, sans-serif;
@@ -19,6 +19,9 @@
         padding: 20px;
         margin-bottom: 20px;
         box-shadow: 0 0 8px rgba(0,0,0,0.1);
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
     }
     .panel h2 {
         margin-top: 0;
@@ -28,9 +31,11 @@
     }
     input[type="text"] {
         padding: 8px;
-        width: 200px;
+        width: 100%;
         border-radius: 5px;
         border: 1px solid #aaa;
+        box-sizing: border-box;
+        margin-top: 5px;
     }
     button {
         padding: 10px 15px;
@@ -57,70 +62,48 @@
 </head>
 <body>
 
-<h1>Procesos Masivos</h1>
-
-
-<div class="panel">
-    <h2>Proceso Masivo de Facturación</h2>
-    <label>Fecha (dd-mm-aaaa):</label>
-    <input type="text" id="fechaFact" placeholder="dd-mm-aaaa">
-    <br>
-    <button onclick="enviar('facturacion', 'fechaFact', 'msgFact')">Ejecutar proceso</button>
-    <div id="msgFact"></div>
-</div>
-
+<h1>Procesar Operaciones por Fecha (XML)</h1>
 
 <div class="panel">
-    <h2>Proceso Masivo de Cortes</h2>
-    <label>Fecha (dd-mm-aaaa):</label>
-    <input type="text" id="fechaCortes" placeholder="dd-mm-aaaa">
-    <br>
-    <button onclick="enviar('cortes', 'fechaCortes', 'msgCortes')">Ejecutar proceso</button>
-    <div id="msgCortes"></div>
-</div>
-
-
-<div class="panel">
-    <h2>Proceso Masivo de Reconexion</h2>
-    <label>Fecha (dd-mm-aaaa):</label>
-    <input type="text" id="fechaReconexion" placeholder="dd-mm-aaaa">
-    <br>
-    <button onclick="enviar('reconexion', 'fechaReconexion', 'msgReconexion')">Ejecutar proceso</button>
-    <div id="msgReconexion"></div>
+    <h2>Procesar XML</h2>
+    <label>Ruta del XML en el servidor:</label>
+    <input type="text" id="rutaXml" placeholder="C:\Users\USUARIO\Documents\GitHub\BD1_TerceraTareaProgramada\XMLS\xmlUltimo.xml">
+    <button onclick="enviarProcesosPorFecha()">Ejecutar procesos por fecha</button>
+    <div id="msgProcFecha"></div>
 </div>
 
 <script>
-async function enviar(tipo, inputId, msgId) {
-    const fecha = document.getElementById(inputId).value;
-    const msg = document.getElementById(msgId);
+async function enviarProcesosPorFecha() {
+    const ruta = document.getElementById('rutaXml').value.trim();
+    const msg = document.getElementById('msgProcFecha');
     msg.innerHTML = "";
     msg.className = "";
 
-    if (!fecha) {
-        msg.textContent = "Debes ingresar una fecha.";
+    if (!ruta) {
+        msg.textContent = "Debes ingresar la ruta del archivo XML.";
         msg.className = "msg error";
         return;
     }
 
     try {
-        const response = await fetch(`/api/masivos/${tipo}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ fechaOperacion: fecha })
+        const response = await fetch('/api/procesos/operaciones-por-fecha', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pathXML: ruta }) // <- el backend espera pathXML
         });
 
         const data = await response.json();
 
         if (response.ok && data.success) {
-            msg.textContent = data.message;
-            msg.className = "msg success";
+            msg.textContent = data.message || 'Operaciones procesadas correctamente para el XML indicado.';
+            msg.className = 'msg success';
         } else {
-            msg.textContent = "Error: " + (data.CodigoError ?? data.error);
-            msg.className = "msg error";
+            msg.textContent = "Error: " + (data.CodigoError ?? data.error ?? 'Desconocido');
+            msg.className = 'msg error';
         }
     } catch (err) {
         msg.textContent = "Error en la comunicación con el servidor.";
-        msg.className = "msg error";
+        msg.className = 'msg error';
     }
 }
 </script>
