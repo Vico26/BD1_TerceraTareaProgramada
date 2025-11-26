@@ -398,7 +398,7 @@ router.get('/tipoAsociacion', async (req, res) => {
 
 router.get('/ccpropiedad', async (req, res) => {
     try {
-        const resultado = await obtenerCCPropiedad(); // ← tu función del módulo
+        const resultado = await obtenerCCPropiedad(); 
         return manejarRespuestaSP(res, resultado);
     } catch (err) {
         console.error('Error en /ccpropiedad', err);
@@ -408,7 +408,7 @@ router.get('/ccpropiedad', async (req, res) => {
 
 router.post('/procesos/operaciones-por-fecha', async (req, res) => {
     try {
-        const { pathXML } = req.body;   // ejemplo: "C:\\Users\\USUARIO\\...\\xmlUltimo.xml"
+        const { pathXML } = req.body;   
 
         if (!pathXML) {
             return res.status(400).json({ error: 'Falta pathXML' });
