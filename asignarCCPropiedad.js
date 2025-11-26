@@ -46,14 +46,5 @@ async function asignarCCPropiedad({ numeroFinca, idCC, tipoAso, fechaRegistro })
 
 module.exports = { asignarCCPropiedad };
 
-/*
--- Opción B (si quieres mantener firma posicional):
-async function asignarCCPropiedadPosicional(numeroFinca, idCC, tipoAso, fechaRegistro) { ... }
--- Y en la ruta:
-const resultado = await asignarCCPropiedadPosicional(
-  req.body.numeroFinca, req.body.idCC, req.body.tipoAso, req.body.fechaRegistro
-);
-*/
-
 //asignarCCPropiedad("F-0012",5,1,"2025-11-24");
-//obtenerCCPropiedad();
+
